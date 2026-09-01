@@ -1,0 +1,12 @@
+# Locked-down static/API security headers (matches the edufintech CSP discipline:
+# no inline scripts, no framing, strict base-uri).
+# NOTE: the /elm/ deployment inherits the parent site's CSP; these are here for
+# when elmtree is served standalone.
+/*
+  Content-Security-Policy: default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; img-src 'self' data:; object-src 'none'
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: DENY
+
+/api/*
+  Cache-Control: no-store

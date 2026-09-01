@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ELMTREE — the coworker grove</title>
+<meta name="description" content="Interactive elm tree. Pick a leaf to enter your personal space.">
+<meta property="og:title" content="ELMTREE">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<canvas id="starfield"></canvas>
+<div class="glow" id="glow"></div>
+
+<div class="tr-wrap">
+  <h1 class="tr-title">ELMTREE</h1>
+  <p class="tr-sub">the coworker grove</p>
+
+  <div class="tr-tree">
+    <svg id="trSvg"></svg>
+  </div>
+
+  <div class="tr-sts"><span class="stsd"></span> <span id="leafCount">few</span> leaves in the grove</div>
+</div>
+
+<!-- Lock gate -->
+<div class="gate hidden" id="gate" role="dialog" aria-modal="true" aria-label="Enter leaf">
+  <div class="gatebox">
+    <div class="glock">🔒</div>
+    <h2 id="gateTitle">LEAF LOCKED</h2>
+    <p id="gateSub">Enter the leaf password.</p>
+    <input id="gateIn" type="password" placeholder="••••••" autocomplete="off">
+    <div class="gaterr" id="gateErr"></div>
+    <button class="primary" id="gateBtn">Unlock</button>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<script src="elm.js"></script>
+</body>
+</html>

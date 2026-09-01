@@ -1,0 +1,20 @@
+name = "elmtree"
+compatibility_date = "2026-08-26"
+pages_build_output_dir = "."
+
+# KV binding used by functions/api/board.js to persist each leaf's kanban board.
+# Create the namespace and paste its id:
+#   wrangler kv namespace create ELM
+[[kv_namespaces]]
+binding = "ELM"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+
+[vars]
+# Chat provider: "deepseek" (default, pennies) or "openai".
+ELM_CHAT_PROVIDER = "deepseek"
+
+# Leaf registry lives in functions/_shared.js. Secrets below are set via
+# `wrangler pages secret put` (never committed):
+#   ELM_LEAF_SECRETS   JSON string -> { "<leaf id>": { "pass_hash":"<sha256 hex>", "assistant":"<prompt>" } }
+#   ELM_TOKEN_SECRET   random string used to sign unlock tokens
+#   DEEPSEEK_API_KEY   your DeepSeek API key

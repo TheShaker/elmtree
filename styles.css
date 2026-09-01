@@ -1,0 +1,120 @@
+/* ELMTREE styles — dark grove theme */
+:root{
+  --el-dark:#0b0f14; --el-void:#06090d;
+  --bark:#d7b98c;
+  --leaf1:#4caf50; --leaf2:#66bb6a; --leaf3:#81c784; --leafA:#8bc34a;
+  --leafB:#a5d6a7; --leafC:#c8e6c9;
+  --ink:#e6f3ff; --dim:rgba(230,243,255,.55); --faint:rgba(230,243,255,.3);
+  --accent:#66bb6a; --amber:#ffd54f; --err:#ef5350;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  font-family:'Inter',sans-serif;color:var(--ink);
+  min-height:100vh;overflow-x:hidden;position:relative;
+  background:radial-gradient(1200px 800px at 50% -10%, #16222c 0%, #0b0f14 45%, #06090d 100%);
+}
+#starfield{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.glow{position:fixed;inset:0;z-index:1;pointer-events:none;background:radial-gradient(600px 400px at 50% 78%, rgba(102,187,106,.10), transparent 70%)}
+
+/* ---------- Homepage ---------- */
+.tr-wrap{position:relative;z-index:2;max-width:1200px;margin:0 auto;padding:2rem 1.5rem 1rem;display:flex;flex-direction:column;align-items:center;min-height:100vh}
+.tr-title{font-family:'Orbitron',sans-serif;font-size:3.2rem;font-weight:900;letter-spacing:.32em;text-transform:uppercase;color:var(--ink);text-shadow:0 0 24px rgba(102,187,106,.35)}
+@media (max-width:640px){.tr-title{font-size:2.2rem;letter-spacing:.2em}}
+.tr-sub{font-family:'Inter',sans-serif;font-weight:300;letter-spacing:.5em;text-transform:uppercase;color:var(--dim);font-size:.7rem;margin-top:.4rem}
+
+.tr-tree{width:100%;max-width:860px;margin:1rem 0 0}
+#trSvg{width:100%;height:auto;overflow:visible}
+
+/* branch stroke aging via CSS — subtle */
+#elmMain path{transition:opacity .6s}
+
+.leafg{opacity:0;cursor:pointer;transform-origin:center}
+#trSvg.grown .leafg{animation:leafIn .9s ease forwards;transition:opacity .6s}
+@keyframes leafIn{from{opacity:0}to{opacity:1}}
+.leafg .leafhalo{fill:transparent;pointer-events:none;transition:fill .3s}
+.leafg .leafshape{fill:var(--leaf1);stroke:rgba(0,0,0,.25);stroke-width:.8;transition:fill .25s,filter .25s;pointer-events:none}
+.leafg .leafstem{stroke:rgba(160,120,70,.5);stroke-width:2;fill:none}
+.leafg .leaflabel{fill:rgba(255,255,255,.92);font-size:12px;font-weight:600;font-family:'Orbitron',sans-serif;letter-spacing:.08em;pointer-events:none;transition:fill .25s;text-shadow:0 1px 4px rgba(0,0,0,.9),0 0 8px rgba(0,0,0,.8)}
+
+/* gentle sway */
+.leafg .leafshape{transform-origin:50% 0;animation:sway var(--du,1s) ease-in-out var(--db,0s) infinite alternate}
+@keyframes sway{from{transform:rotate(var(--sw,-6deg))}to{transform:rotate(6deg)}}
+
+/* hover */
+.leafg.hov{opacity:1}
+.leafg.hov .leafhalo{fill:rgba(255,213,79,.22)}
+.leafg.hov .leafshape{fill:var(--amber);filter:drop-shadow(0 0 10px rgba(255,213,79,.9))}
+.leafg.hov .leaflabel{fill:#fff}
+
+.tr-sts{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--faint);letter-spacing:.12em;margin-top:1.4rem;text-transform:uppercase;display:flex;align-items:center;gap:.5rem}
+.stsd{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent);animation:pulse 2.4s infinite}
+@keyframes pulse{0%{opacity:.4}50%{opacity:1}100%{opacity:.4}}
+
+/* ---------- Lock gate ---------- */
+.gate{position:fixed;inset:0;background:rgba(4,7,10,.82);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:50}
+.gate.hidden{display:none}
+.gatebox{background:linear-gradient(160deg,#16222c,#0d141b);border:1px solid rgba(102,187,106,.28);border-radius:18px;padding:2rem 2.5rem;text-align:center;max-width:340px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.6),0 0 40px rgba(102,187,106,.12)}
+.gatebox .glock{font-size:2.4rem;margin-bottom:.5rem}
+.gatebox h2{font-family:'Orbitron',sans-serif;font-size:1rem;letter-spacing:.14em;color:var(--ink);margin-bottom:.4rem}
+.gatebox p{color:var(--dim);font-size:.75rem;margin-bottom:1.2rem}
+.gatebox input{width:100%;background:#0b1219;border:1px solid rgba(255,255,255,.14);border-radius:10px;color:var(--ink);font-family:'JetBrains Mono',monospace;font-size:.85rem;padding:.65rem .85rem;outline:none;margin-bottom:.8rem;text-align:center}
+.gatebox input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(102,187,106,.15)}
+.gatebox button.primary{width:100%;background:linear-gradient(135deg,#43a047,#2e7d32);border:none;color:#fff;font-family:'Orbitron',sans-serif;font-size:.72rem;letter-spacing:.14em;padding:.65rem;border-radius:10px;cursor:pointer;text-transform:uppercase;transition:transform .15s,box-shadow .15s}
+.gatebox button.primary:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(46,125,50,.4)}
+.gaterr{color:var(--err);font-size:.7rem;min-height:1em;margin-bottom:.5rem;font-family:'JetBrains Mono',monospace}
+
+/* ---------- Toast ---------- */
+.toast{position:fixed;bottom:1.4rem;left:50%;transform:translateX(-50%);background:#0d141b;border:1px solid rgba(255,255,255,.12);color:var(--ink);font-family:'JetBrains Mono',monospace;font-size:.75rem;padding:.5rem 1rem;border-radius:8px;z-index:80;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.toast.hidden{display:none}
+.hidden{display:none!important}
+
+/* ---------- Leaf page (kanban + chat) ---------- */
+.lf-wrap{max-width:1300px;margin:0 auto;padding:1.4rem 1.5rem;position:relative;z-index:2}
+.lf-toolbar{background:rgba(11,18,25,.7);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:.8rem 1rem;margin-bottom:1.1rem;display:flex;align-items:center;justify-content:space-between;gap:.8rem;flex-wrap:wrap;box-shadow:0 6px 20px rgba(0,0,0,.35)}
+.lf-toolbar h1{font-family:'Orbitron',sans-serif;font-size:1.2rem;letter-spacing:.12em;color:var(--ink);text-transform:uppercase;display:flex;align-items:center;gap:.5rem}
+.lf-toolbar .sub{color:var(--dim);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;margin-top:.2rem}
+.lf-actions{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
+.lf-toolbar a.back{color:var(--dim);text-decoration:none;font-family:'Orbitron',sans-serif;font-size:.68rem;letter-spacing:.08em}
+.lf-toolbar a.back:hover{color:#fff}
+.lf-toolbar button,.lf-actions button{font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.04em;padding:.4rem .8rem;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:var(--ink);cursor:pointer;transition:all .2s}
+.lf-toolbar button:hover{background:rgba(255,255,255,.14)}
+.saved{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:#81c784;opacity:0;transition:opacity .3s}
+.saved.on{opacity:1}
+
+.lf-main{display:grid;grid-template-columns:1fr 340px;gap:1.1rem;align-items:start}
+@media (max-width:900px){.lf-main{grid-template-columns:1fr}}
+
+/* board (corkboard, mirrored from kandan) */
+.board{display:flex;gap:1rem;align-items:flex-start;overflow-x:auto;padding-bottom:.5rem}
+.col{flex:1 1 270px;min-width:250px;max-width:310px;background:rgba(255,248,230,.05);border:1px solid rgba(255,255,255,.10);border-radius:14px;padding:.7rem;display:flex;flex-direction:column;gap:.55rem;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+.coltitle{font-family:'Patrick Hand',cursive;border:none;background:transparent;color:var(--ink);font-size:1.3rem;outline:none;border-bottom:1px dashed rgba(255,255,255,.2);margin-bottom:.2rem}
+.colcount{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--dim)}
+.cards{display:flex;flex-direction:column;gap:.55rem;min-height:28px}
+.card{background:var(--card-y,#3c4a1f);color:#eef6e6;border:1px solid rgba(0,0,0,.3);border-radius:3px;padding:.5rem .6rem;position:relative;box-shadow:0 3px 8px rgba(0,0,0,.4);font-family:'Patrick Hand',cursive;font-size:1.1rem}
+.card.c-pink{--card-y:#66304b}.card.c-blue{--card-y:#274c6b}.card.c-green{--card-y:var(--card-y,#2c4f2f)}.card.c-orange{--card-y:#6b4a26}
+.ctext{width:100%;background:transparent;border:none;outline:none;color:inherit;font-family:'Patrick Hand',cursive;font-size:1.18rem;min-height:1.2em;resize:none;line-height:1.3}
+.cmeta{display:flex;justify-content:space-between;align-items:center;margin-top:.25rem}
+.addcard{background:transparent;border:1px dashed rgba(255,255,255,.25);border-radius:6px;color:var(--dim);padding:.4rem;font-size:.68rem;cursor:pointer;font-family:'JetBrains Mono',monospace}
+.addcard:hover{color:var(--accent)}
+.colempty{font-family:'Patrick Hand',cursive;color:var(--faint);font-size:1rem;text-align:center;padding:.3rem;display:none}
+.mini{background:transparent;border:none;color:var(--dim);cursor:pointer;font-size:.75rem;padding:.1rem .25rem}
+.mini:hover{color:#fff}
+
+/* chat panel */
+.chat{background:rgba(11,18,25,.7);border:1px solid rgba(255,255,255,.1);border-radius:14px;box-shadow:0 6px 20px rgba(0,0,0,.35);display:flex;flex-direction:column;height:560px;overflow:hidden}
+.chat-head{padding:.7rem 1rem;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:.5rem}
+.chat-head h2{font-family:'Orbitron',sans-serif;font-size:.82rem;letter-spacing:.12em;color:var(--ink);text-transform:uppercase}
+.chat-head .hint{font-size:.64rem;color:var(--faint);margin-left:auto;font-family:'JetBrains Mono',monospace}
+.chat-body{flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:.7rem}
+.msg{max-width:88%;padding:.55rem .8rem;border-radius:12px;font-size:.85rem;line-height:1.45;white-space:pre-wrap;word-wrap:break-word}
+.msg.user{align-self:flex-end;background:linear-gradient(135deg,#275c30,#1e4826);border-bottom-right-radius:3px}
+.msg.bot{align-self:flex-start;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-bottom-left-radius:3px}
+.msg .who{display:block;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-bottom:.2rem;font-family:'JetBrains Mono',monospace}
+.msg.typing{color:var(--faint);font-style:italic}
+.chat-in{display:flex;gap:.5rem;padding:.7rem;border-top:1px solid rgba(255,255,255,.08)}
+.chat-in input{flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:8px;color:var(--ink);font-family:'Inter',sans-serif;font-size:.85rem;padding:.55rem .7rem;outline:none}
+.chat-in input:focus{border-color:var(--accent)}
+.chat-in button{background:linear-gradient(135deg,#43a047,#2e7d32);border:none;color:#fff;font-family:'Orbitron',sans-serif;font-size:.7rem;letter-spacing:.1em;padding:.55rem .9rem;border-radius:8px;cursor:pointer;text-transform:uppercase}
+.chat-in button:disabled{opacity:.5;cursor:default}
+.chat .ermsg{color:var(--err);font-size:.72rem;font-family:'JetBrains Mono',monospace}

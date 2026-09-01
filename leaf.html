@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LEAF · ELMTREE</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600&family=JetBrains+Mono:wght@400;500&family=Patrick+Hand&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<style>
+  body{background:radial-gradient(900px 600px at 30% -10%, #16222c 0%, #0b0f14 50%, #06090d 100%)}
+</style>
+</head>
+<body>
+<canvas id="starfield"></canvas>
+<div class="lf-wrap" id="wrap">
+  <div class="lf-toolbar">
+    <div>
+      <h1><span id="lfLeaf">LEAF</span> · <span id="lfWho">grove</span></h1>
+      <div class="sub" id="lfSub">your corkboard &amp; assistant</div>
+    </div>
+    <div class="lf-actions">
+      <span class="saved" id="saved">✓ saved</span>
+      <a class="back" href="index.html">← Tree</a>
+    </div>
+  </div>
+
+  <div class="lf-main">
+    <div>
+      <div class="board" id="board"></div>
+    </div>
+    <div class="chat">
+      <div class="chat-head">
+        <h2>🌿 <span id="chatName">Assistant</span></h2>
+        <span class="hint" id="chatState">idle</span>
+      </div>
+      <div class="chat-body" id="chatBody"></div>
+      <div class="chat-in">
+        <input id="chatIn" type="text" placeholder="Ask your assistant…" autocomplete="off">
+        <button id="chatSend" disabled>Send</button>
+      </div>
+      <div class="ermsg" id="chatErr"></div>
+    </div>
+  </div>
+</div>
+
+<script src="leaf.js"></script>
+</body>
+</html>
