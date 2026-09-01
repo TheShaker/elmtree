@@ -12,6 +12,11 @@ const PROVIDERS = {
     model: 'deepseek-chat',
     key: (env) => env.DEEPSEEK_API_KEY,
   },
+  openrouter: {
+    url: 'https://openrouter.ai/api/v1/chat/completions',
+    model: 'deepseek/deepseek-chat',
+    key: (env) => env.OPENROUTER_API_KEY,
+  },
   openai: {
     url: 'https://api.openai.com/v1/chat/completions',
     model: 'gpt-4o-mini',

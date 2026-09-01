@@ -7,11 +7,12 @@ pages_build_output_dir = "."
 #   wrangler kv namespace create ELM
 [[kv_namespaces]]
 binding = "ELM"
-id = "REPLACE_WITH_KV_NAMESPACE_ID"
+id = "08d31514678944e0ba883fb24b701e8d"
 
 [vars]
-# Chat provider: "deepseek" (default, pennies) or "openai".
-ELM_CHAT_PROVIDER = "deepseek"
+# Chat provider: "openrouter" (default — DeepSeek via OpenRouter, pennies) or
+# "deepseek", "openai".
+ELM_CHAT_PROVIDER = "openrouter"
 
 # Leaf registry lives in functions/_shared.js. Secrets below are set via
 # `wrangler pages secret put` (never committed):
