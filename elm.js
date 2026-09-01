@@ -48,8 +48,17 @@ function genTree(){
   svg.setAttribute('viewBox','0 0 1000 860');
   svg.setAttribute('preserveAspectRatio','xMidYMax meet');
 
-  // trunk base
-  const origin = {x:500, y:830};
+  // Green planet for the tree to rest on (large sphere near the bottom).
+  const planet = el('g',{id:'elmPlanet'}, svg);
+  const defs = el('defs',{}, svg);
+  const grad = el('radialGradient',{id:'planetGrad',cx:'38%',cy:'32%',r:'75%'}, defs);
+  el('stop',{offset:'0%','stop-color':'#9be0a8'}, grad);
+  el('stop',{offset:'55%','stop-color':'#3d9c4f'}, grad);
+  el('stop',{offset:'100%','stop-color':'#14521f'}, grad);
+  el('circle',{cx:500,cy:880,r:300,fill:'url(#planetGrad)'}, planet);
+
+  // trunk base (sits on the planet horizon)
+  const origin = {x:500, y:610};
 
   // branch defs
   const groupMain = el('g',{id:'elmMain'}, svg);
@@ -58,7 +67,7 @@ function genTree(){
     const ex = x + Math.cos(ang)*len;
     const ey = y + Math.sin(ang)*len;
     // draw branch
-    const p = el('path',{
+    el('path',{
       d:`M${x} ${y} C ${x+Math.cos(ang)*len*0.5} ${y+Math.sin(ang)*len*0.4}, ${x+Math.cos(ang)*len*0.8} ${y+Math.sin(ang)*len*0.8}, ${ex} ${ey}`,
       fill:'none', stroke:'#4a3a28', 'stroke-width':width,
       'stroke-linecap':'round'
@@ -66,19 +75,19 @@ function genTree(){
 
     if(depth<=0) return {x:ex,y:ey};
 
-    const n = depth>3 ? 3 : (depth>2 ? (rnd()<.5?2:3) : (rnd()<.7?2:3));
+    const n = depth>4 ? 3 : (depth>3 ? 3 : (rnd()<.5?2:3));
     const kids=[];
     for(let i=0;i<n;i++){
-      const spread = depth>3 ? 0.5 : rnd()*.7+.35;
+      const spread = depth>4 ? 0.55 : rnd()*.7+.4;
       const na = ang + (Math.random()*2-1)*spread;
-      const nl = len * (0.62 + rnd()*0.22);
-      const nw = Math.max(1, width*0.66);
+      const nl = len * (0.66 + rnd()*0.18);
+      const nw = Math.max(1.2, width*0.70);
       const child = branch(ex,ey,nl,na,depth-1,nw);
       kids.push(child);
     }
     return {x:ex,y:ey, kids};
   }
-  const root = branch(origin.x, origin.y, 190, -Math.PI/2, 5, 22, []);
+  const root = branch(origin.x, origin.y, 210, -Math.PI/2, 6, 26, []);
 
   // collect terminal leaf positions
   const terminals=[];
@@ -88,7 +97,6 @@ function genTree(){
   }
   walk(root);
 
-  // assign leaves from a list (injected) or generate generic ones
   return {svg, groupMain, terminals};
 }
 
@@ -112,38 +120,39 @@ function placeLeaves(leaves){
   const count = document.getElementById('leafCount');
 
   const N = Math.min(leaves.length || 0, terms.length);
-  // pick roughly every (terms/N)th terminal, offset by a bit for organic feel
-  const stride = Math.max(1, Math.floor(terms.length/(N||1)));
+  // Distribute leaves across the full canopy: bucket terminals by x-position
+  // and pick a spread that covers left→right instead of a linear stride (which
+  // clusters near one branch).
+  const sorted = terms.slice().sort((a,b) => a.x - b.x);
   const picks = [];
   for(let i=0;i<N;i++){
-    let ti = i*stride + Math.floor(rnd()*stride*0.5);
-    if(ti>=terms.length) ti = terms.length-1-i;
-    picks.push({leaf:leaves[i], term:terms[ti]});
+    // evenly-spaced indices across the sorted (by x) terminals
+    let ti = Math.floor(i * (sorted.length / N) + (Math.random() * (sorted.length/N)));
+    ti = Math.min(ti, sorted.length-1);
+    picks.push({leaf:leaves[i], term:sorted[ti]});
   }
 
   let ok=0;
   picks.forEach(({leaf, term}, idx)=>{
     if(!leaf || !leaf.id) return;
     const g = el('g',{class:'leafg', 'data-leaf':leaf.id}, groupMain);
-    g.style.setProperty('--du', (0.5+Math.random()*1.1).toFixed(2)+'s');
-    g.style.setProperty('--db', (Math.random()*4).toFixed(2)+'s');
 
-    // leaf shape (two arcs) rotated toward branch
-    const rot = (Math.random()*40-20 + idx*7)* (idx%2? -1:1);
+    // leaf shape (two arcs) rotated toward branch — large
+    const rot = (Math.random()*30-15 + idx*7)* (idx%2? -1:1);
     const leafShape = el('path',{
-      d:'M 0 0 C -7 -6 -12 -10 -14 0 C -12 9 -7 5 0 0 Z',
-      class:'leafshape', transform:`rotate(${rot})`
+      d:'M 0 0 C -22 -18 -38 -30 -44 0 C -38 28 -22 16 0 0 Z',
+      class:'leafshape', fill:'#86e25a', stroke:'#14521f', 'stroke-width':'2', transform:`rotate(${rot})`
     }, g);
 
-    // soft glow backing
-    el('circle',{cx:0,cy:0,r:26,class:'leafhalo'}, g);
+    // soft glow backing — large
+    el('circle',{cx:0,cy:0,r:80,class:'leafhalo',fill:'rgba(255,255,255,.12)'}, g);
 
-    // label
-    const label = el('text',{class:'leaflabel','text-anchor':'middle',dy:34}, g);
+    // label — large, bright white
+    const label = el('text',{class:'leaflabel','text-anchor':'middle',dy:92,fill:'#ffffff'}, g);
     label.textContent = leaf.name || leaf.id;
 
     // stem connector
-    el('path',{d:`M 0 0 L 0 ${2+Math.random()*6}`,class:'leafstem'}, g);
+    el('path',{d:`M 0 0 L 0 ${4+Math.random()*8}`,class:'leafstem'}, g);
 
     const tx = term.x, ty = term.y;
     g.setAttribute('transform',`translate(${tx} ${ty})`);

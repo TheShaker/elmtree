@@ -9,7 +9,7 @@
 // Tokens are signed HMAC-SHA256 over (leafId + expiry) with ELM_TOKEN_SECRET.
 
 export const LEAF_REGISTRY = [
-  { id: 'shaker',   name: 'Shaker' },
+  { id: 'shaker',   name: 'Tech Wizard 🧙' },
   { id: 'facilities', name: 'Facilities' },
   { id: 'frontdesk',  name: 'Front Desk' },
   { id: 'athletics',  name: 'Athletics' },

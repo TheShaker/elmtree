@@ -18,13 +18,15 @@ body{
 .glow{position:fixed;inset:0;z-index:1;pointer-events:none;background:radial-gradient(600px 400px at 50% 78%, rgba(102,187,106,.10), transparent 70%)}
 
 /* ---------- Homepage ---------- */
-.tr-wrap{position:relative;z-index:2;max-width:1200px;margin:0 auto;padding:2rem 1.5rem 1rem;display:flex;flex-direction:column;align-items:center;min-height:100vh}
+.tr-wrap{position:relative;z-index:2;max-width:1200px;margin:0 auto;padding:1.2rem 1.5rem 0;display:flex;flex-direction:column;align-items:center;min-height:100vh}
 .tr-title{font-family:'Orbitron',sans-serif;font-size:3.2rem;font-weight:900;letter-spacing:.32em;text-transform:uppercase;color:var(--ink);text-shadow:0 0 24px rgba(102,187,106,.35)}
 @media (max-width:640px){.tr-title{font-size:2.2rem;letter-spacing:.2em}}
 .tr-sub{font-family:'Inter',sans-serif;font-weight:300;letter-spacing:.5em;text-transform:uppercase;color:var(--dim);font-size:.7rem;margin-top:.4rem}
 
-.tr-tree{width:100%;max-width:860px;margin:1rem 0 0}
-#trSvg{width:100%;height:auto;overflow:visible}
+/* Tree = hero: flex-grow fills the viewport, planet anchored to the bottom.
+   preserveAspectRatio xMidYMax meet keeps the sphere flush to the base. */
+.tr-tree{flex:1;width:100%;max-width:1200px;min-height:0;display:flex;align-items:flex-end}
+#trSvg{width:100%;height:auto;max-height:82vh;overflow:visible}
 
 /* branch stroke aging via CSS — subtle */
 #elmMain path{transition:opacity .6s}
@@ -32,14 +34,10 @@ body{
 .leafg{opacity:0;cursor:pointer;transform-origin:center}
 #trSvg.grown .leafg{animation:leafIn .9s ease forwards;transition:opacity .6s}
 @keyframes leafIn{from{opacity:0}to{opacity:1}}
-.leafg .leafhalo{fill:transparent;pointer-events:none;transition:fill .3s}
-.leafg .leafshape{fill:var(--leaf1);stroke:rgba(0,0,0,.25);stroke-width:.8;transition:fill .25s,filter .25s;pointer-events:none}
-.leafg .leafstem{stroke:rgba(160,120,70,.5);stroke-width:2;fill:none}
-.leafg .leaflabel{fill:rgba(255,255,255,.92);font-size:12px;font-weight:600;font-family:'Orbitron',sans-serif;letter-spacing:.08em;pointer-events:none;transition:fill .25s;text-shadow:0 1px 4px rgba(0,0,0,.9),0 0 8px rgba(0,0,0,.8)}
-
-/* gentle sway */
-.leafg .leafshape{transform-origin:50% 0;animation:sway var(--du,1s) ease-in-out var(--db,0s) infinite alternate}
-@keyframes sway{from{transform:rotate(var(--sw,-6deg))}to{transform:rotate(6deg)}}
+.leafg .leafhalo{fill:rgba(255,255,255,.10);pointer-events:none;transition:fill .3s}
+.leafg .leafshape{fill:#7ed957;stroke:rgba(0,0,0,.3);stroke-width:2;transition:fill .25s,filter .25s;pointer-events:none}
+.leafg .leafstem{stroke:rgba(160,120,70,.6);stroke-width:3;fill:none}
+.leafg .leaflabel{fill:rgba(255,255,255,.95);font-size:22px;font-weight:700;font-family:'Orbitron',sans-serif;letter-spacing:.05em;pointer-events:none;transition:fill .25s;text-shadow:0 1px 6px rgba(0,0,0,.9),0 0 16px rgba(0,0,0,.85)}
 
 /* hover */
 .leafg.hov{opacity:1}
