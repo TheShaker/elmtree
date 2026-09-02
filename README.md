@@ -1,6 +1,6 @@
 # ELMTREE 🌳
 
-Interactive homepage for the school's coworker grove. A generative elm tree — every
+Interactive homepage for the grove. A generative elm tree — every
 terminal branch carries a clickable leaf. Clicking a leaf opens a lock gate; the
 right password lands you in that person's personal space: a corkboard-style kanban
 board **and** a chat window with their own assistant.
@@ -90,7 +90,7 @@ both work.
 
 ## Roadmap (not yet built)
 
-- Per-leaf Google Calendar live-insert (wired to the coworker's real calendar via
+- Per-leaf Google Calendar live-insert (wired to the leaf member's real calendar via
   their own OAuth — not a shared master token)
 - "Locked" leaves that gate both read and write (currently read of the page is
   public; content + write are gated)
