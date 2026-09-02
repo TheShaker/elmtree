@@ -292,14 +292,14 @@ window.ELM_LEAVES = window.ELM_LEAVES || null;
 // Each slot has an angle AND a height factor, so leaves land at different
 // heights for a dynamic canopy while staying centered + branch-touched.
 const SLOT_POOL = [
-  { deg:-75, h:0.72 },
-  { deg:-52, h:0.98 },
-  { deg:-29, h:0.82 },
-  { deg:-8,  h:0.98 },
-  { deg: 8,  h:0.84 },
-  { deg: 29, h:0.95 },
-  { deg: 52, h:0.78 },
-  { deg: 75, h:0.9  },
+  { deg:-80, h:0.80 },
+  { deg:-57, h:0.95 },
+  { deg:-34, h:0.86 },
+  { deg:-11, h:0.90 },
+  { deg: 11, h:0.84 },
+  { deg: 34, h:0.96 },
+  { deg: 57, h:0.86 },
+  { deg: 80, h:0.92 },
 ];
 const DOME={ cx:500, cy:315, rx:400, ry:255 };
 function slotXY(s){
@@ -335,30 +335,34 @@ function placeLeaves(leaves){
     const bob = el('g',{class:'leafbob'}, g);
 
     // --- invisible hit target: generous circle covering leaf + icon ---
-    const hit = el('circle',{cx:0,cy:40,r:78,class:'leafhit',fill:'rgba(0,0,0,0)'}, bob);
+    const hit = el('circle',{cx:0,cy:0,r:78,class:'leafhit',fill:'rgba(0,0,0,0)'}, bob);
 
-    // --- stem (from branch tip down to the leaf) ---
-    el('path',{d:'M 0 0 C 1 8 2 16 0 26', class:'leafstem'}, bob);
+    // --- stem (from branch outward to the leaf hub) ---
+    el('path',{d:'M 0 0 C -2 6 -4 12 -2 20', class:'leafstem'}, bob);
 
-    // --- leaf + midrib: giant leaf, stem attaches to the far pointed tip ---
-    // REALISM: each portal leaf varies in size, green shade, and orientation.
-    // Orientation is fully randomized (seeded rnd → randomizes on every refresh)
-    // and decoupled from the slot index so leaves point every which way.
-    const LEAF_TINTS=['#86e25a','#79d84f','#93ea6a','#6fd044','#8ae662'];
-    const rot = (rnd()*150-75).toFixed(1);     // -75..+75 deg, fully random per leaf
-    const scl = (0.88+rnd()*0.26).toFixed(2);
-    const lf = el('g',{class:'leafbody', transform:`translate(56 26) rotate(${rot}) scale(${scl})`}, bob);
+    // --- leaf + midrib: leaf radiates OUTWARD from the trunk. Each leaf is
+    // rotated so its long axis points along the slot's radial direction (away
+    // from the tree centre), with a small per-leaf wobble so they stay organic
+    // but READ as an even, deliberate canopy — no more random scattered spin.
+    // The emoji sits on the leaf's centre rather than floating above.
+    const LEAF_TINTS=['#b4f27e','#a8ee6f','#c0f791','#9be865','#b1f079'];
+    const radial = Math.atan2(sp.y-DOME.cy, sp.x-DOME.cx);
+    // leaf shape spans x -56..0 (long axis along -x); center it on the slot so
+    // it straddles the branch tip, long axis along the radial direction.
+    const rot = (radial*180/Math.PI + (rnd()*14-7)).toFixed(1);
+    const scl = (0.78+rnd()*0.20).toFixed(2);
+    const lf = el('g',{class:'leafbody', transform:`rotate(${rot}) translate(28 0) scale(${scl})`}, bob);
     el('path',{
       d:'M 0 0 C -26 -22 -48 -36 -56 0 C -48 34 -26 20 0 0 Z',
-      class:'leafshape', fill:LEAF_TINTS[Math.floor(rnd()*LEAF_TINTS.length)], stroke:'#1d5c20','stroke-width':'3'
+      class:'leafshape', fill:LEAF_TINTS[Math.floor(rnd()*LEAF_TINTS.length)], stroke:'#123a16','stroke-width':'3.5'
     }, lf);
-    el('path',{d:'M -55 0 L 0 0', class:'midrib','stroke':'#17651b','stroke-width':'2.4','opacity':'0.5'}, lf);
+    el('path',{d:'M -55 0 L 0 0', class:'midrib','stroke':'#135518','stroke-width':'2.6','opacity':'0.55'}, lf);
 
-    // subtle white ring, shown on hover
-    el('ellipse',{cx:0,cy:26,rx:60,ry:62,class:'leafring',fill:'none'}, bob);
+    // subtle white ring, shown on hover (hugging the elongated leaf)
+    el('ellipse',{cx:0,cy:-18,rx:64,ry:56,class:'leafring',fill:'none'}, bob);
 
-    // emoji icon: hovers ABOVE the branch tip (negative y = above anchor)
-    const label = el('text',{class:'leaflabel','text-anchor':'middle',y:-22,fill:'#ffffff'}, bob);
+    // emoji icon: centered on the leaf's visual centre, always upright
+    const label = el('text',{class:'leaflabel','text-anchor':'middle',x:0,y:-16,fill:'#ffffff'}, bob);
     label.textContent = leaf.name || leaf.id;
 
     g.setAttribute('transform',`translate(${px} ${py})`);

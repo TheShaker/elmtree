@@ -20,11 +20,12 @@ body{
 /* ---------- Homepage ---------- */
 /* Locked to viewport height so nothing scrolls (the planet stays at the visible
    bottom). dvh tracks the mobile browser's dynamic URL-bar height. */
-.tr-wrap{position:relative;z-index:2;max-width:1200px;margin:0 auto;padding:1.2rem 1.5rem 0;display:flex;flex-direction:column;align-items:center;height:100dvh;overflow:hidden}
+.tr-wrap{position:relative;z-index:2;max-width:1200px;margin:0 auto;padding:1.6rem 1.5rem 0;display:flex;flex-direction:column;align-items:center;height:100dvh;overflow:hidden}
 /* title — dropped lower into the freed space above the hovering icons */
-.tr-title{font-family:'Orbitron',sans-serif;font-size:2.4rem;font-weight:900;letter-spacing:.28em;text-transform:uppercase;color:#fff;text-shadow:0 0 28px rgba(102,187,106,.45);margin-top:.4rem}
+.tr-title{font-family:'Orbitron',sans-serif;font-size:2.4rem;font-weight:900;letter-spacing:.28em;text-transform:uppercase;color:#fff;text-shadow:0 0 28px rgba(102,187,106,.45);margin-top:1.1rem}
 @media (max-width:640px){.tr-title{font-size:1.6rem;letter-spacing:.18em;margin-top:.2rem}}
-.tr-sub{font-family:'Inter',sans-serif;font-weight:300;letter-spacing:.5em;text-transform:uppercase;color:var(--dim);font-size:.68rem;margin-top:.28rem}
+.tr-sub{font-family:'Inter',sans-serif;font-weight:300;letter-spacing:.5em;text-transform:uppercase;color:var(--dim);font-size:.68rem;margin-top:.28rem;padding-left:.5em}
+.tr-hint{font-family:'Inter',sans-serif;font-weight:300;font-size:.72rem;color:var(--faint);letter-spacing:.14em;margin-top:.9rem}
 
 /* Tree = hero. SVG keeps the 1000:860 viewBox aspect (width-driven height) so
    there's no vertical letterbox gap; on wide screens it also respects vh. */
@@ -47,7 +48,7 @@ body{
 /* stem */
 .leafg .leafstem{stroke:#7a5433;stroke-width:2.4;fill:none;stroke-linecap:round}
 /* leaf body + midrib */
-.leafg .leafshape{transition:fill .22s,filter .22s;pointer-events:none}
+.leafg .leafshape{transition:fill .22s,filter .22s;pointer-events:none;filter:drop-shadow(0 3px 6px rgba(0,20,8,.6)) drop-shadow(0 0 12px rgba(150,255,130,.28))}
 .leafg .midrib{pointer-events:none}
 /* ring: hidden by default, appears as a soft outline on hover */
 .leafg .leafring{stroke:rgba(255,255,255,0);stroke-width:1.6;transition:stroke .22s,opacity .22s;opacity:0;pointer-events:none}
