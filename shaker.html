@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TECH WIZARD · ELMTREE</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600&family=JetBrains+Mono:wght@400;500&family=Patrick+Hand&family=Shadows+Into+Light&display=swap" rel="stylesheet">
+<style>
+:root{
+  --void:#3a2413;--t1:#2b2119;--t2:rgba(43,33,25,.6);--t3:rgba(43,33,25,.35);
+  --ok:#1f8a4c;--err:#c0392b;--card-y:#fff3a3;--card-p:#ffc9d8;--card-b:#cfe5ff;
+  --card-g:#d4f2c8;--card-o:#ffe0b3;--tape:rgba(255,255,255,.55);--n-purple:#7b2ff7;--n-blue:#2196f3;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:'Inter',sans-serif;color:var(--t1);min-height:100vh;overflow-x:hidden;
+  background:
+    radial-gradient(1200px 700px at 50% -10%, rgba(255,255,255,.06), transparent 60%),
+    repeating-linear-gradient(45deg, rgba(0,0,0,.05) 0 2px, transparent 2px 7px),
+    repeating-linear-gradient(-45deg, rgba(255,255,255,.02) 0 2px, transparent 2px 6px),
+    repeating-linear-gradient(0deg, rgba(0,0,0,.03) 0 1px, transparent 1px 5px),
+    #a4703c;
+}
+.boardframe{max-width:1180px;margin:0 auto;padding:1.4rem 1.5rem 3rem}
+.toolbar{background:rgba(58,36,19,.85);border:1px solid rgba(0,0,0,.4);border-radius:14px;padding:.8rem 1rem;margin-bottom:1.1rem;display:flex;align-items:center;justify-content:space-between;gap:.8rem;flex-wrap:wrap;box-shadow:0 6px 20px rgba(0,0,0,.3)}
+.toolbar h1{font-family:'Orbitron',sans-serif;font-size:1.15rem;letter-spacing:.12em;color:#ffe9c4;text-transform:uppercase;display:flex;align-items:center;gap:.5rem}
+.toolbar .sub{color:rgba(255,233,196,.6);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;margin-top:.2rem}
+.actions{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
+.saved{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:#8bf0b0;opacity:0;transition:opacity .3s}.saved.on{opacity:1}
+button{font-family:'JetBrains Mono',monospace;font-size:.72rem;letter-spacing:.04em;padding:.4rem .8rem;border-radius:8px;border:1px solid rgba(0,0,0,.35);background:rgba(255,255,255,.85);color:var(--t1);cursor:pointer;transition:all .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+button:hover{background:#fff;transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.25)}
+button.primary{background:linear-gradient(135deg,#c98a2d,#7a4a12);color:#fff;border:none}
+a.back{color:rgba(255,233,196,.9);text-decoration:none;font-family:'Orbitron',sans-serif;font-size:.7rem;letter-spacing:.08em}
+a.back:hover{color:#fff}
+
+.scratch{background:var(--card-y);border:1px solid rgba(0,0,0,.12);border-radius:8px;padding:.7rem 1rem .75rem;position:relative;box-shadow:0 6px 18px rgba(0,0,0,.3);transform:rotate(.3deg);width:100%;margin:.3rem 0 1.6rem}
+.scratch::before{content:'';position:absolute;top:-9px;left:50%;transform:translateX(-50%) rotate(1deg);width:74px;height:18px;background:var(--tape);box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.scratchhead{font-family:'Shadows Into Light',cursive;font-size:1.2rem;color:rgba(53,43,26,.7);margin-bottom:.4rem}
+.scratchrow{display:flex;align-items:stretch;gap:.8rem}
+#scratch{flex:1;background:rgba(255,255,255,.32);border:none;border-bottom:1px dashed rgba(0,0,0,.25);color:#35291a;font-family:'Patrick Hand',cursive;font-size:1.2rem;min-height:2.6em;resize:vertical;padding:.35rem .5rem;outline:none;line-height:1.4}
+#scratch:focus{background:rgba(255,255,255,.5)}
+
+.board{display:flex;gap:1.1rem;align-items:flex-start;overflow-x:auto;padding-bottom:1rem}
+.col{flex:1 1 270px;min-width:250px;max-width:310px;background:rgba(255,248,230,.45);border:1px solid rgba(0,0,0,.18);border-radius:14px;padding:.7rem;display:flex;flex-direction:column;gap:.6rem;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+.coltitle{font-family:'Shadows Into Light',cursive;font-size:1.3rem;letter-spacing:.02em;background:transparent;border:none;outline:none;color:var(--t1);border-bottom:1px dashed rgba(0,0,0,.2)}
+.colcount{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:rgba(43,33,25,.5)}
+.cards{display:flex;flex-direction:column;gap:.7rem;min-height:30px}
+.colempty{font-family:'Shadows Into Light',cursive;color:rgba(43,33,25,.4);font-size:1rem;text-align:center;padding:.4rem;display:none}
+.card{background:var(--card-y);color:#352b1a;border:1px solid rgba(0,0,0,.1);border-radius:2px;padding:.5rem .6rem;position:relative;box-shadow:0 4px 10px rgba(0,0,0,.28);transform:rotate(-1deg)}
+.card:hover{transform:rotate(0) translateY(-2px);box-shadow:0 8px 18px rgba(0,0,0,.35)}
+.card::before{content:'';position:absolute;top:-9px;left:50%;transform:translateX(-50%) rotate(-2deg);width:64px;height:15px;background:var(--tape);box-shadow:0 1px 3px rgba(0,0,0,.2);opacity:.9}
+.ctext{width:100%;background:transparent;border:none;outline:none;color:inherit;font-family:'Patrick Hand',cursive;font-size:1.18rem;min-height:1.2em;resize:none;line-height:1.3}
+.cmeta{display:flex;justify-content:space-between;align-items:center;margin-top:.25rem}
+.mini{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;padding:0;line-height:1;font-size:.75rem;opacity:.5;background:transparent;box-shadow:none;border:none;border-radius:6px}
+.mini:hover{opacity:1;color:var(--err);background:rgba(0,0,0,.1)}
+.addcard{background:rgba(255,255,255,.5);border:1px dashed rgba(0,0,0,.3);border-radius:6px;color:rgba(43,33,25,.6);padding:.4rem;font-size:.68rem;cursor:pointer;text-align:left;font-family:'JetBrains Mono',monospace;box-shadow:none}
+.addcard:hover{color:var(--n-blue);background:rgba(255,255,255,.7)}
+@media (max-width:700px){.board{flex-direction:column;align-items:stretch}.col{max-width:none}}
+</style>
+</head>
+<body>
+<div class="boardframe">
+  <div class="toolbar">
+    <div>
+      <h1>🧙 TECH WIZARD</h1>
+      <div class="sub">corkboard scratch pad</div>
+    </div>
+    <div class="actions">
+      <span class="saved" id="saved">✓ saved</span>
+      <a class="back" href="index.html">← Tree</a>
+    </div>
+  </div>
+
+  <div class="scratch">
+    <div class="scratchhead">📝 Scratch &amp; Dump</div>
+    <div class="scratchrow">
+      <textarea id="scratch" placeholder="Brain-dump here…"></textarea>
+    </div>
+  </div>
+
+  <div class="board" id="board"></div>
+</div>
+
+<script>
+// A blank, standalone corkboard mirroring dshaker.space/kandan.
+// No gate, no backend — everything persists to localStorage. Non-sensitive only.
+const LS='elmtree_shaker_board';
+const COLORS=['','pink','blue','green','orange'];
+let board=null, saveTimer=null, dirty=false;
+function uid(p){return p+Math.random().toString(36).slice(2,9)}
+
+const DEFAULT_COLS=[
+  {id:uid('c'),title:'Backlog',cards:[]},
+  {id:uid('c'),title:'Practice',cards:[]},
+  {id:uid('c'),title:'Games',cards:[]},
+  {id:uid('c'),title:'Done',cards:[]}
+];
+
+function defaultBoard(){return {columns:JSON.parse(JSON.stringify(DEFAULT_COLS)),scratch:''}}
+
+function loadBoard(){
+  try{ board = JSON.parse(localStorage.getItem(LS)) || defaultBoard(); }
+  catch(e){ board = defaultBoard(); }
+  if(!board.columns||!Array.isArray(board.columns)) board.columns=DEFAULT_COLS.slice();
+  if(board.scratch===undefined) board.scratch='';
+  document.getElementById('scratch').value=board.scratch||'';
+  render();
+}
+
+function scheduleSave(){
+  dirty=true;
+  board.scratch=document.getElementById('scratch').value;
+  localStorage.setItem(LS, JSON.stringify(board));
+  clearTimeout(saveTimer); saveTimer=setTimeout(()=>{
+    const el=document.getElementById('saved');
+    if(dirty){ dirty=false; el.classList.add('on'); setTimeout(()=>el.classList.remove('on'),1400); }
+  },700);
+}
+
+function render(){
+  const bd=document.getElementById('board'); bd.innerHTML='';
+  board.columns.forEach(col=>{
+    const sec=document.createElement('section'); sec.className='col';
+    const head=document.createElement('div'); head.style.display='flex'; head.style.alignItems='center'; head.style.gap='.4rem';
+    const inp=document.createElement('input'); inp.className='coltitle'; inp.value=col.title; inp.placeholder='Column';
+    inp.oninput=()=>{col.title=inp.value;scheduleSave();};
+    const del=document.createElement('button'); del.className='mini'; del.textContent='✕';
+    del.title='Delete column'; del.onclick=()=>{if(confirm('Delete "'+col.title+'" and its cards?')){board.columns=board.columns.filter(c=>c!==col);scheduleSave();render();}};
+    const cnt=document.createElement('span'); cnt.className='colcount'; cnt.textContent=col.cards.length;
+    head.append(inp,del,cnt);
+    const cards=document.createElement('div'); cards.className='cards';
+    col.cards.forEach(cd=>cards.appendChild(cardEl(cd,col)));
+    const empty=document.createElement('div'); empty.className='colempty';
+    empty.style.display=col.cards.length?'none':'block'; empty.textContent='empty';
+    const add=document.createElement('button'); add.className='addcard'; add.textContent='+ add card';
+    add.onclick=()=>{col.cards.push({id:uid('k'),text:''});scheduleSave();render();};
+    sec.append(head,cards,empty,add); bd.appendChild(sec);
+  });
+}
+
+function cardEl(cd,col){
+  const div=document.createElement('div');
+  div.className='card'+(cd.color&&COLORS.includes(cd.color)?' c-'+cd.color:'');
+  const ta=document.createElement('textarea'); ta.className='ctext'; ta.rows=1; ta.placeholder='Task…'; ta.value=cd.text;
+  ta.oninput=()=>{cd.text=ta.value;scheduleSave();};
+  ta.addEventListener('input',()=>{ta.style.height='auto';ta.style.height=ta.scrollHeight+'px';});
+  requestAnimationFrame(()=>{ta.style.height='auto';ta.style.height=ta.scrollHeight+'px';});
+  const meta=document.createElement('div'); meta.className='cmeta';
+  const dots=document.createElement('span'); dots.style.display='flex'; dots.style.gap='.25rem';
+  COLORS.forEach(c=>{
+    const d=document.createElement('button'); d.className='mini'; d.style.width='15px';d.style.height='15px';d.style.borderRadius='50%';
+    d.style.border='1px solid rgba(0,0,0,.15)';
+    d.style.background={x:'#fff3a3',pink:'#ffc9d8',blue:'#cfe5ff',green:'#d4f2c8',orange:'#ffe0b3'}[c];
+    d.style.outline=(cd.color===c)?'2px solid #333':'';
+    d.onclick=()=>{cd.color=c;scheduleSave();render();};
+    dots.appendChild(d);
+  });
+  meta.append(dots);
+  const del=document.createElement('button'); del.className='mini'; del.textContent='✕';
+  del.onclick=()=>{col.cards=col.cards.filter(x=>x!==cd);scheduleSave();render();};
+  meta.appendChild(del);
+  div.append(ta,meta); return div;
+}
+
+document.getElementById('scratch').addEventListener('input',scheduleSave);
+loadBoard();
+</script>
+</body>
+</html>

@@ -113,84 +113,102 @@ function genTree(){
   // branch defs
   const groupMain = el('g',{id:'elmMain'}, svg);
   const nodes = [];   // every branch endpoint (for canopy-tip leaves)
-  nodes.push({x:origin.x,y:origin.y,depth:99,ang:-Math.PI/2});
 
-  function branch(x,y,len,ang,depth,width){
-    const ex = x + Math.cos(ang)*len;
-    const ey = y + Math.sin(ang)*len;
-    nodes.push({x:ex,y:ey,depth,ang});
-
-    if(width>=3){
-      // Tapered filled limb = solid, textured trunk & branches
-      const nx=-Math.sin(ang)*0.5, ny=Math.cos(ang)*0.5; // unit-ish perpendicular
-      const p0a=`${x+nx*width} ${y+ny*width}`;
-      const p0b=`${x-nx*width} ${y-ny*width}`;
-      const p1a=`${ex+nx*(width*0.6)} ${ey+ny*(width*0.6)}`;
-      const p1b=`${ex-nx*(width*0.6)} ${ey-ny*(width*0.6)}`;
-      el('path',{
-        d:`M${p0a} L${p1a} L${p1b} L${p0b} Z`,
-        fill:'url(#woodGrad)', stroke:'rgba(20,12,5,.6)','stroke-width':'0.8'
-      }, groupMain);
-      // bark ridge highlight down the limb
-      el('path',{
-        d:`M${x} ${y} C ${x+Math.cos(ang)*len*0.5} ${y+Math.sin(ang)*len*0.5}, ${ex-Math.cos(ang)*len*0.15} ${ey-Math.sin(ang)*len*0.15}, ${ex} ${ey}`,
-        fill:'none', stroke:'rgba(255,240,210,.16)','stroke-width':Math.max(1,width*0.3),'stroke-linecap':'round'
-      }, groupMain);
-      // bark grain: short dark notches along the limb for real texture
-      if(width>=8){
-        const steps=Math.max(2,Math.floor(len/22));
-        for(let s=1;s<steps;s++){
-          const t=s/steps;
-          const mx=x+(ex-x)*t, my=y+(ey-y)*t;
-          const jag=rnd()*2.4*width-1.2*width;
-          el('path',{
-            d:`M${mx+jag} ${my+1} Q ${mx+jag*0.4} ${my+rnd()*6} ${mx+jag} ${my-1}`,
-            fill:'none', stroke:'rgba(20,12,5,.5)','stroke-width':Math.max(1,width*0.12),'stroke-linecap':'round'
-          }, groupMain);
-        }
+  function limb(x,y,x2,y2,width){
+    // straight tapered filled limb between two points (used for trunk + primaries)
+    nodes.push({x:x2,y:y2,depth:2,ang:Math.atan2(y2-y,x2-x)});
+    const len=Math.hypot(x2-x,y2-y)||1;
+    const dx=(x2-x)/len, dy=(y2-y)/len, px=-dy, py=dx;
+    const w0=width, w1=Math.max(1,width*0.6);
+    el('path',{
+      d:`M${x+px*w0} ${y+py*w0} L${x2+px*w1} ${y2+py*w1} L${x2-px*w1} ${y2-py*w1} L${x-px*w0} ${y-py*w0} Z`,
+      fill:'url(#woodGrad)', stroke:'rgba(20,12,5,.6)','stroke-width':'0.8'
+    }, groupMain);
+    el('path',{d:`M${x} ${y} L${x2} ${y2}`,fill:'none',stroke:'rgba(255,240,210,.16)','stroke-width':Math.max(1,width*0.3),'stroke-linecap':'round'}, groupMain);
+    if(width>=8){
+      const steps=Math.max(2,Math.floor(len/22));
+      for(let s=1;s<steps;s++){ const t=s/steps; const mx=x+(x2-x)*t,my=y+(y2-y)*t; const jag=rnd()*2.4*width-1.2*width;
+        el('path',{d:`M${mx+jag} ${my+1} Q ${mx+jag*0.4} ${my+rnd()*6} ${mx+jag} ${my-1}`,fill:'none',stroke:'rgba(20,12,5,.5)','stroke-width':Math.max(1,width*0.12),'stroke-linecap':'round'}, groupMain);
       }
-    } else {
-      // twig: plain tapered line
-      el('path',{
-        d:`M${x} ${y} C ${x+Math.cos(ang)*len*0.5} ${y+Math.sin(ang)*len*0.4}, ${ex-Math.cos(ang)*len*0.2} ${ey-Math.sin(ang)*len*0.2}, ${ex} ${ey}`,
-        fill:'none', stroke:'#3a2615','stroke-width':width,'stroke-linecap':'round'
-      }, groupMain);
     }
+  }
 
+  // A curved twig for recursion.
+  function twig(x,y,x2,y2,width){
+    el('path',{
+      d:`M${x} ${y} C ${x+(x2-x)*0.5} ${y+(y2-y)*0.4}, ${x2-(x2-x)*0.2} ${y2-(y2-y)*0.2}, ${x2} ${y2}`,
+      fill:'none', stroke:'#3a2615','stroke-width':width,'stroke-linecap':'round'
+    }, groupMain);
+  }
+
+  // ---------- Trunk: straight up (no random bend) ----------
+  const crown={x:500, y:430};                 // trunk top
+  limb(origin.x, origin.y, crown.x, crown.y, 30);
+
+  // ---------- Symmetric primary fan spanning the leaf arc ----------
+  // Leaves sit on the outer arc (cx,cy,rx,ry) below. Radiate primaries from the
+  // crown outward (down-left to down-right through the top) so the whole canopy
+  // spans WHERE the leaves are, evenly and symmetrically.
+  const leafArc={cx:500, cy:300, rx:392, ry:260};
+  const NPRIM = 9;
+  const prim=[];
+  for(let i=0;i<NPRIM;i++){
+    // a sweeps from the left arc point (angle~PI) through the top to the right
+    // arc point (angle~0). At each, the primary points radially OUTWARD-DOWN
+    // from the crown toward that arc point (so both far edges are covered).
+    const f=i/(NPRIM-1);
+    const a = Math.PI + (0-Math.PI)*f;        // PI..0 (top arc)
+    const tx = leafArc.cx + Math.cos(a)*leafArc.rx*0.98;
+    const ty = leafArc.cy - Math.sin(a)*leafArc.ry*0.9 + 10;
+    prim.push({x:tx,y:ty});
+    // outward direction: from crown (spine) outward to the leaf point
+    const dir = Math.atan2(ty-crown.y, tx-crown.x);
+    const L = Math.hypot(tx-crown.x, ty-crown.y);
+    // draw to ~85% of the way (leaves sit just beyond the branch tips)
+    const bx = crown.x + Math.cos(dir)*L*0.8;
+    const by = crown.y + Math.sin(dir)*L*0.8;
+    limb(crown.x, crown.y, bx, by, 13);
+    prim[i].base={x:bx,y:by};
+  }
+
+  // ---------- Recursive branching: fill each primary's region with twigs ----------
+  function branch(x,y,len,ang,depth,width){
+    const ex = x+Math.cos(ang)*len, ey=y+Math.sin(ang)*len;
+    nodes.push({x:ex,y:ey,depth,ang});
+    if(width>=2.6){
+      nodes.push({x:ex,y:ey,depth,ang});
+      limb(x,y,ex,ey,width);
+    } else {
+      twig(x,y,ex,ey,Math.max(1,width));
+    }
     if(depth<=0) return {x:ex,y:ey};
-
-    const n = depth>4 ? 3 : (depth>3 ? 3 : (rnd()<.5?2:3));
+    const n = depth>2 ? 3 : (rnd()<.5?2:3);
     const kids=[];
     for(let i=0;i<n;i++){
-      const spread = depth>4 ? 0.85 : 0.6 + rnd()*0.5;
+      const spread = 0.7 + rnd()*0.5;
       const na = ang + (rnd()*2-1)*spread;
-      const nl = len * (0.7 + rnd()*0.18);
-      const nw = Math.max(1.2, width*0.70);
+      const nl = len*(0.62+rnd()*0.18);
+      const nw = Math.max(1.2, width*0.72);
       kids.push(branch(ex,ey,nl,na,depth-1,nw));
     }
     return {x:ex,y:ey, kids};
   }
-  const root = branch(origin.x, origin.y, 205, -Math.PI/2, 6, 30);
+  // grow real subtrees off each primary endpoint, branching outward along the
+  // primary's own direction so twigs fill the whole canopy region (not just the top)
+  const root = {items: prim.map(p=>{
+    // outward direction from the crown through this primary tip
+    const b=p.base||{x:p.x,y:p.y};
+    const dir = Math.atan2(b.y-crown.y, b.x-crown.x);
+    // small recursive crown growing sideways around the tip
+    const tipDir = dir + (rnd()*0.5-0.25);
+    return branch(b.x, b.y, 34+rnd()*46, tipDir, 3, 4);
+  })};
 
-  // ---------- Canopy-tip tufts: small leaves right on twig ends ----------
-  nodes.forEach(nd=>{
-    if(nd.depth>=98||nd.depth<=0) return;
-    // every deep node carries a little leaf tuft poking out of the twig end
-    const sz=rnd()*4+5;
-    const c=rnd();
-    el('ellipse',{
-      cx:nd.x, cy:nd.y,
-      rx:sz*0.7, ry:sz,
-      fill:c<0.5?(c<0.25?'#388e3c':'#66bb6a'):'#4caf50',
-      opacity:0.6+rnd()*0.4,
-      transform:`rotate(${rnd()*28-14})`
-    }, foliage);
-  });
-
-  // collect terminal positions (portal leaf anchors) from the real root
+  // collect terminals (for any logic that wants them)
   const terminals=[];
   (function walk(n){
     if(n.kids && n.kids.length){ n.kids.forEach(walk); }
+    else if(n.items){ n.items.forEach(walk); }
     else terminals.push(n);
   })(root);
 
@@ -213,11 +231,10 @@ function placeLeaves(leaves){
   const N = leaves.length;
   if(!N){ svg.classList.add('grown'); return; }
 
-  // Place every portal leaf on an outer semicircle around the crown so they
-  // never overlap and the layout stays radially symmetric as leaves are added.
-  // Arc: centered on the crown, opening downward; angle sweeps the top half.
-  const cx=500, cy=290;              // crown center
-  const rx=392, ry=300;              // semi-ellipse reach (full canopy width)
+  // Place every portal leaf on the outer semicircle spanning the canopy, matching
+  // the primary fan reach (leafArc in genTree). Leaves sit high in the canopy.
+  const cx=500, cy=300;              // crown center (matches genTree leafArc)
+  const rx=392, ry=260;              // semi-ellipse reach (full canopy width)
   const startA=Math.PI, endA=0;      // left -> top -> right (top of tree = up)
   let ok=0;
   for(let i=0;i<N;i++){
@@ -308,7 +325,11 @@ async function unlock(){
     if(d.ok && d.token){
       sessionStorage.setItem('elm_token_'+activeLeaf.id, d.token);
       sessionStorage.setItem('elm_leaf', activeLeaf.id);
-      window.location.href = '/leaf.html?leaf='+encodeURIComponent(activeLeaf.id);
+      // Static board pages for the leaves that have them; others fall back to
+      // the locked leaf.html (which shows a lock prompt until a token proves in).
+      const BOARD_PAGES = { shaker:'/shaker.html', athletics:'/athletics.html' };
+      const dest = BOARD_PAGES[activeLeaf.id] || ('/leaf.html?leaf='+encodeURIComponent(activeLeaf.id));
+      window.location.href = dest;
     } else {
       err.textContent = d.error || '✗ access denied';
     }
