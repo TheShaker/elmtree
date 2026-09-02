@@ -316,7 +316,6 @@ function loadLeaves(){
 
 function placeLeaves(leaves){
   const {svg, groupMain} = TREE;
-  const count = document.getElementById('leafCount');
   if(!leaves || !leaves.length){ svg.classList.add('grown'); return; }
 
   // Place each portal leaf at its shared slot point (angle + varied height).
@@ -372,7 +371,6 @@ function placeLeaves(leaves){
   }
 
   svg.classList.add('grown');
-  count.textContent = ok;
 }
 
 const TREE = (function(){
