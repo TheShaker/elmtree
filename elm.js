@@ -92,18 +92,18 @@ function genTree(){
       opacity:0.5+rnd()*0.3,
       transform:`translate(0 0) rotate(${rnd()*90-45})`
     }, grofWrap);
-    // ~1 in 6 canopy leaves gently drifts + fades (subtle falling effect)
-    if(rnd()<0.16){
+    // ~1 in 4 canopy leaves gently drifts + fades (falling effect)
+    if(rnd()<0.28){
       grof.classList.add('leaf-fall');
       grof.style.setProperty('--fx0', '0px');
       grof.style.setProperty('--fy0', '0px');
-      grof.style.setProperty('--fx1', (rnd()*26-13).toFixed(0)+'px');
-      grof.style.setProperty('--fy1', (24+rnd()*46).toFixed(0)+'px');
+      grof.style.setProperty('--fx1', (rnd()*34-17).toFixed(0)+'px');
+      grof.style.setProperty('--fy1', (30+rnd()*60).toFixed(0)+'px');
       grof.style.setProperty('--fr0', '0deg');
-      grof.style.setProperty('--fr1', (rnd()*36-18).toFixed(0)+'deg');
-      grof.style.setProperty('--fdur', (7+rnd()*7).toFixed(1)+'s');
-      grof.style.setProperty('--fdel', (rnd()*6).toFixed(1)+'s');
-      grof.style.setProperty('--fomax', (0.25+rnd()*0.2).toFixed(2));
+      grof.style.setProperty('--fr1', (rnd()*46-23).toFixed(0)+'deg');
+      grof.style.setProperty('--fdur', (5.5+rnd()*5).toFixed(1)+'s');
+      grof.style.setProperty('--fdel', (rnd()*4).toFixed(1)+'s');
+      grof.style.setProperty('--fomax', (0.3+rnd()*0.22).toFixed(2));
     }
   }
 
@@ -226,13 +226,22 @@ function placeLeaves(leaves){
     const px = cx + Math.cos(a)*rx;
     const py = cy - Math.sin(a)*ry;
     const g = el('g',{class:'leafg','data-leaf':leaf.id}, groupMain);
+    g.style.setProperty('--brot', i);
+
+    // bob wrapper: all visible leaf content + hit target sit here so the whole
+    // leaf + label lifts together on a gentle idle bob (placement translate
+    // stays on the outer g, so the arc is never disturbed).
+    const bob = el('g',{class:'leafbob'}, g);
+
+    // --- invisible hit target: a generous circle covering leaf + label ---
+    const hit = el('circle',{cx:0,cy:44,r:56,class:'leafhit',fill:'rgba(0,0,0,0)'}, bob);
 
     // --- stem (drawn from branch node toward the leaf) ---
-    el('path',{d:'M 0 0 C 1 9 2 16 0 24', class:'leafstem'}, g);
+    el('path',{d:'M 0 0 C 1 9 2 16 0 24', class:'leafstem'}, bob);
 
     // --- leaf + midrib ---
     const rot = (rnd()*24-12 + i*6)*(i%2?-1:1);
-    const lf = el('g',{class:'leafbody', transform:`translate(0 24) rotate(${rot})`}, g);
+    const lf = el('g',{class:'leafbody', transform:`translate(0 24) rotate(${rot})`}, bob);
     el('path',{
       d:'M 0 0 C -13 -11 -24 -18 -28 0 C -24 17 -13 10 0 0 Z',
       class:'leafshape', fill:'#86e25a', stroke:'#1d5c20','stroke-width':'1.6'
@@ -240,10 +249,10 @@ function placeLeaves(leaves){
     el('path',{d:'M -27 0 L 1 0', class:'midrib','stroke':'#1d5c20','stroke-width':'1','opacity':'0.5'}, lf);
 
     // subtle white ring, shown on hover
-    el('ellipse',{cx:0,cy:24,rx:30,ry:34,class:'leafring',fill:'none'}, g);
+    el('ellipse',{cx:0,cy:24,rx:30,ry:34,class:'leafring',fill:'none'}, bob);
 
     // label
-    const label = el('text',{class:'leaflabel','text-anchor':'middle',dy:74,fill:'#ffffff'}, g);
+    const label = el('text',{class:'leaflabel','text-anchor':'middle',dy:74,fill:'#ffffff'}, bob);
     label.textContent = leaf.name || leaf.id;
 
     g.setAttribute('transform',`translate(${px} ${py})`);

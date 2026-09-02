@@ -31,9 +31,16 @@ body{
 /* branch stroke aging via CSS — subtle */
 #elmMain path{transition:opacity .6s}
 
-.leafg{opacity:0;cursor:pointer;transform-origin:center}
-#trSvg.grown .leafg{animation:leafIn .9s ease forwards;transition:opacity .6s}
+.leafg{opacity:0;cursor:pointer}
+#trSvg.grown .leafg{animation:leafIn .9s ease forwards}
 @keyframes leafIn{from{opacity:0}to{opacity:1}}
+/* hit target: transparent, fills the whole leaf+label area so hovering works */
+.leafg .leafhit{pointer-events:all}
+.leafg .leafstem,.leafg .leafshape,.leafg .midrib,.leafg .leafring,.leafg .leaflabel{pointer-events:none}
+/* gentle constant bob on the whole portal leaf (leaf + label lift together) */
+#trSvg.grown .leafg{animation:leafIn .9s ease forwards}
+#trSvg.grown .leafg > .leafbob{animation:leafBob 3.4s ease-in-out infinite;animation-delay:calc(var(--brot,0)*0.13s)}
+@keyframes leafBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
 /* stem */
 .leafg .leafstem{stroke:#7a5433;stroke-width:2.4;fill:none;stroke-linecap:round}
 /* leaf body + midrib */
