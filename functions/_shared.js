@@ -9,11 +9,11 @@
 // Tokens are signed HMAC-SHA256 over (leafId + expiry) with ELM_TOKEN_SECRET.
 
 export const LEAF_REGISTRY = [
-  { id: 'shaker',   name: 'Tech Wizard 🧙' },
-  { id: 'facilities', name: 'Facilities' },
-  { id: 'frontdesk',  name: 'Front Desk' },
-  { id: 'athletics',  name: 'Athletics' },
-  { id: 'nurse',      name: 'Nurse' },
+  { id: 'shaker',   name: '🧙' },
+  { id: 'facilities', name: '🔧' },
+  { id: 'frontdesk',  name: '🛎️' },
+  { id: 'athletics',  name: '🏅' },
+  { id: 'nurse',      name: '🩺' },
 ];
 
 // Optional per-leaf assistant personas; falls back to a shared default.

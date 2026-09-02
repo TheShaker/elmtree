@@ -146,29 +146,30 @@ function genTree(){
   limb(origin.x, origin.y, crown.x, crown.y, 30);
 
   // ---------- Symmetric primary fan spanning the leaf arc ----------
-  // Leaves sit on the outer arc (cx,cy,rx,ry) below. Radiate primaries from the
-  // crown outward (down-left to down-right through the top) so the whole canopy
-  // spans WHERE the leaves are, evenly and symmetrically.
-  const leafArc={cx:500, cy:300, rx:392, ry:260};
-  const NPRIM = 9;
+  // Leaves sit on the outer arc (cx,cy,rx,ry) below. Radiate a primary from the
+  // crown to each leaf-arc point so the outer row of branches IS the leaf row
+  // (no protruding dead primaries). The arc is a rounded top dome — tight enough
+  // that branches don't droop below the crown.
+  const leafArc={cx:500, cy:330, rx:340, ry:215};
+  // Symmetric top dome: angles from center, ±35°, ±70°. Using (x=cx+sinθ·rx,
+  // y=cy−cosθ·ry) keeps every leaf ABOVE the center so the dome reads as a clean
+  // outward row with no drooping branches below the crown.
+  const leafAngles=[-70,-35,0,35,70];          // degrees, left→right
+  const NPRIM = leafAngles.length;
   const prim=[];
   for(let i=0;i<NPRIM;i++){
-    // a sweeps from the left arc point (angle~PI) through the top to the right
-    // arc point (angle~0). At each, the primary points radially OUTWARD-DOWN
-    // from the crown toward that arc point (so both far edges are covered).
-    const f=i/(NPRIM-1);
-    const a = Math.PI + (0-Math.PI)*f;        // PI..0 (top arc)
-    const tx = leafArc.cx + Math.cos(a)*leafArc.rx*0.98;
-    const ty = leafArc.cy - Math.sin(a)*leafArc.ry*0.9 + 10;
-    prim.push({x:tx,y:ty});
-    // outward direction: from crown (spine) outward to the leaf point
+    const deg=leafAngles[i], rad=deg*Math.PI/180;
+    const tx = leafArc.cx + Math.sin(rad)*leafArc.rx;
+    const ty = leafArc.cy - Math.cos(rad)*leafArc.ry;
+    prim.push({x:tx,y:ty,angle:deg});
+    // outward direction from crown to the leaf point
     const dir = Math.atan2(ty-crown.y, tx-crown.x);
     const L = Math.hypot(tx-crown.x, ty-crown.y);
-    // draw to ~85% of the way (leaves sit just beyond the branch tips)
-    const bx = crown.x + Math.cos(dir)*L*0.8;
-    const by = crown.y + Math.sin(dir)*L*0.8;
+    const bx = crown.x + Math.cos(dir)*L*0.92;
+    const by = crown.y + Math.sin(dir)*L*0.92;
     limb(crown.x, crown.y, bx, by, 13);
     prim[i].base={x:bx,y:by};
+    prim[i].angle=deg;
   }
 
   // ---------- Recursive branching: bush up each primary, starting way early ----------
@@ -220,8 +221,6 @@ function genTree(){
     });
     // finish the clean outer limb out to the leaf arc point (no crown)
     limb(carry.x, carry.y, b.x, b.y, 10);
-    // a single light outer twig for a hint of life, not a crown
-    out.push(branch(b.x, b.y, 18+rnd()*16, dir+(rnd()*0.5-0.25), 1, 2.5));
     return {itemsTree: out, x:b.x, y:b.y};
   })};
 
@@ -250,23 +249,21 @@ function loadLeaves(){
 function placeLeaves(leaves){
   const {svg, groupMain} = TREE;
   const count = document.getElementById('leafCount');
-  const N = leaves.length;
-  if(!N){ svg.classList.add('grown'); return; }
+  if(!leaves || !leaves.length){ svg.classList.add('grown'); return; }
 
-  // Place every portal leaf on the outer semicircle spanning the canopy, matching
-  // the primary fan reach (leafArc in genTree). Leaves sit high in the canopy.
-  const cx=500, cy=300;              // crown center (matches genTree leafArc)
-  const rx=392, ry=260;              // semi-ellipse reach (full canopy width)
-  const startA=Math.PI, endA=0;      // left -> top -> right (top of tree = up)
+  // Place portal leaves exactly on the outer dome edge where primary branches end.
+  const cx=500, cy=330;                       // dome center (matches genTree leafArc)
+  const rx=340, ry=215;
+  // symmetric dome in degrees (matches genTree): each index = which leaf slot
+  const SLOT_ANGLES=[-70,-35,0,35,70];
   let ok=0;
+  const N = Math.min(leaves.length, SLOT_ANGLES.length);
   for(let i=0;i<N;i++){
     const leaf=leaves[i];
     if(!leaf || !leaf.id) continue;
-    // evenly slot each leaf across the top semicircle
-    const frac = N>1 ? i/(N-1) : 0.5;
-    const a = startA + (endA-startA)*frac;
-    const px = cx + Math.cos(a)*rx;
-    const py = cy - Math.sin(a)*ry;
+    const rad = (SLOT_ANGLES[i]||0)*Math.PI/180;
+    const px = cx + Math.sin(rad)*rx;
+    const py = cy - Math.cos(rad)*ry;
     const g = el('g',{class:'leafg','data-leaf':leaf.id}, groupMain);
     g.style.setProperty('--brot', i);
 
