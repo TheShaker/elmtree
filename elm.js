@@ -171,43 +171,65 @@ function genTree(){
     prim[i].base={x:bx,y:by};
   }
 
-  // ---------- Recursive branching: fill each primary's region with twigs ----------
+  // ---------- Recursive branching: bush up each primary, starting way early ----------
   function branch(x,y,len,ang,depth,width){
     const ex = x+Math.cos(ang)*len, ey=y+Math.sin(ang)*len;
     nodes.push({x:ex,y:ey,depth,ang});
-    if(width>=2.6){
-      nodes.push({x:ex,y:ey,depth,ang});
+    if(width>=2.2){
       limb(x,y,ex,ey,width);
     } else {
       twig(x,y,ex,ey,Math.max(1,width));
     }
     if(depth<=0) return {x:ex,y:ey};
-    const n = depth>2 ? 3 : (rnd()<.5?2:3);
+    const n = depth>=2 ? 3 : 3;
     const kids=[];
     for(let i=0;i<n;i++){
-      const spread = 0.7 + rnd()*0.5;
+      const spread = 0.75 + rnd()*0.55;
       const na = ang + (rnd()*2-1)*spread;
-      const nl = len*(0.62+rnd()*0.18);
-      const nw = Math.max(1.2, width*0.72);
+      const nl = len*(0.55+rnd()*0.2);
+      const nw = Math.max(1.1, width*0.74);
       kids.push(branch(ex,ey,nl,na,depth-1,nw));
     }
     return {x:ex,y:ey, kids};
   }
-  // grow real subtrees off each primary endpoint, branching outward along the
-  // primary's own direction so twigs fill the whole canopy region (not just the top)
+
+  // Grow subtrees. Each PRIMARY sprouts recursive twigs at several stations along
+  // its full length (from ~25% out to the tip), plus a tip crown, so the canopy
+  // fills in along the whole branch rather than only clustering at the far end.
   const root = {items: prim.map(p=>{
-    // outward direction from the crown through this primary tip
     const b=p.base||{x:p.x,y:p.y};
     const dir = Math.atan2(b.y-crown.y, b.x-crown.x);
-    // small recursive crown growing sideways around the tip
-    const tipDir = dir + (rnd()*0.5-0.25);
-    return branch(b.x, b.y, 34+rnd()*46, tipDir, 3, 4);
+    const L = Math.hypot(b.x-crown.x, b.y-crown.y);
+    const out=[];
+    // stations along the primary: early (0.28) through the tip (1.0)
+    const stations=[0.28,0.5,0.72,1.0];
+    let carry={x:crown.x,y:crown.y};
+    stations.forEach((t,si)=>{
+      const sx=crown.x+(b.x-crown.x)*t;
+      const sy=crown.y+(b.y-crown.y)*t;
+      const segLen = Math.hypot(sx-carry.x, sy-carry.y)||1;
+      const segDir = Math.atan2(sy-carry.y, sx-carry.x);
+      // draw the primary as a chain of limbs between stations (bushy base)
+      limb(carry.x, carry.y, sx, sy, t<0.6? 13 : 9);
+      // twigs fanning out sideways from this station
+      const tw= 3 + (si<2? 2 : 1);          // more twig stations near crown
+      for(let k=0;k<tw;k++){
+        const a=segDir + (rnd()*1.2-0.6);
+        const tl = segLen*(0.5+rnd()*0.5);
+        out.push(branch(sx,sy, tl, a, 2+rnd()<0.4?1:2, 3.5));
+      }
+      carry={x:sx,y:sy};
+    });
+    // tip crown, bushy
+    out.push(branch(carry.x, carry.y, 30+rnd()*40, dir+(rnd()*0.6-0.3), 2, 3.5));
+    return {itemsTree: out, x:b.x, y:b.y};
   })};
 
   // collect terminals (for any logic that wants them)
   const terminals=[];
   (function walk(n){
-    if(n.kids && n.kids.length){ n.kids.forEach(walk); }
+    if(n.itemsTree && n.itemsTree.length){ n.itemsTree.forEach(walk); }
+    else if(n.kids && n.kids.length){ n.kids.forEach(walk); }
     else if(n.items){ n.items.forEach(walk); }
     else terminals.push(n);
   })(root);
