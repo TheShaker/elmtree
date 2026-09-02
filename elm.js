@@ -193,35 +193,35 @@ function genTree(){
     return {x:ex,y:ey, kids};
   }
 
-  // Grow subtrees. Each PRIMARY sprouts recursive twigs at several stations along
-  // its full length (from ~25% out to the tip), plus a tip crown, so the canopy
-  // fills in along the whole branch rather than only clustering at the far end.
+  // Grow subtrees. Twigs only appear NEAR the trunk/crown (inner canopy only);
+  // the outer part of each primary stays clean so density falls off toward the
+  // leaf tips instead of clumping at the external branches.
   const root = {items: prim.map(p=>{
     const b=p.base||{x:p.x,y:p.y};
     const dir = Math.atan2(b.y-crown.y, b.x-crown.x);
-    const L = Math.hypot(b.x-crown.x, b.y-crown.y);
     const out=[];
-    // stations along the primary: early (0.28) through the tip (1.0)
-    const stations=[0.28,0.5,0.72,1.0];
+    // twigs only at the inner stations (close to the crown)
+    const stations=[0.32,0.55];
     let carry={x:crown.x,y:crown.y};
     stations.forEach((t,si)=>{
       const sx=crown.x+(b.x-crown.x)*t;
       const sy=crown.y+(b.y-crown.y)*t;
       const segLen = Math.hypot(sx-carry.x, sy-carry.y)||1;
       const segDir = Math.atan2(sy-carry.y, sx-carry.x);
-      // draw the primary as a chain of limbs between stations (bushy base)
-      limb(carry.x, carry.y, sx, sy, t<0.6? 13 : 9);
-      // twigs fanning out sideways from this station
-      const tw= 3 + (si<2? 2 : 1);          // more twig stations near crown
-      for(let k=0;k<tw;k++){
-        const a=segDir + (rnd()*1.2-0.6);
-        const tl = segLen*(0.5+rnd()*0.5);
-        out.push(branch(sx,sy, tl, a, 2+rnd()<0.4?1:2, 3.5));
+      // primary limb up to this station
+      limb(carry.x, carry.y, sx, sy, 13);
+      // a few twigs fanning sideways (inner clump only)
+      for(let k=0;k<2;k++){
+        const a=segDir + (rnd()*1.1-0.55);
+        const tl = segLen*(0.45+rnd()*0.4);
+        out.push(branch(sx,sy, tl, a, 2, 3));
       }
       carry={x:sx,y:sy};
     });
-    // tip crown, bushy
-    out.push(branch(carry.x, carry.y, 30+rnd()*40, dir+(rnd()*0.6-0.3), 2, 3.5));
+    // finish the clean outer limb out to the leaf arc point (no crown)
+    limb(carry.x, carry.y, b.x, b.y, 10);
+    // a single light outer twig for a hint of life, not a crown
+    out.push(branch(b.x, b.y, 18+rnd()*16, dir+(rnd()*0.5-0.25), 1, 2.5));
     return {itemsTree: out, x:b.x, y:b.y};
   })};
 
