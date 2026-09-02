@@ -165,10 +165,12 @@ function genTree(){
     // outward direction from crown to the leaf point
     const dir = Math.atan2(ty-crown.y, tx-crown.x);
     const L = Math.hypot(tx-crown.x, ty-crown.y);
-    const bx = crown.x + Math.cos(dir)*L*0.92;
-    const by = crown.y + Math.sin(dir)*L*0.92;
+    // thick trunk-stroke only reaches ~40% out; the outer portion thins as it
+    // leaves (taper handled by the stations below)
+    const bx = crown.x + Math.cos(dir)*L*0.40;
+    const by = crown.y + Math.sin(dir)*L*0.40;
     limb(crown.x, crown.y, bx, by, 13);
-    prim[i].base={x:bx,y:by};
+    prim[i].base={x: crown.x + Math.cos(dir)*L*0.92, y: crown.y + Math.sin(dir)*L*0.92};
     prim[i].angle=deg;
   }
 
@@ -201,26 +203,29 @@ function genTree(){
     const b=p.base||{x:p.x,y:p.y};
     const dir = Math.atan2(b.y-crown.y, b.x-crown.x);
     const out=[];
-    // twigs only at the inner stations (close to the crown)
-    const stations=[0.32,0.55];
+    // Twigs at inner stations; branch thickness tapers outward so the giant
+    // primary stems from the trunk get thinner as they fan out to the leaves.
+    const stations=[{t:0.30,w:12.5},{t:0.55,w:9},{t:0.80,w:6}];
     let carry={x:crown.x,y:crown.y};
-    stations.forEach((t,si)=>{
-      const sx=crown.x+(b.x-crown.x)*t;
-      const sy=crown.y+(b.y-crown.y)*t;
+    stations.forEach((st,si)=>{
+      const sx=crown.x+(b.x-crown.x)*st.t;
+      const sy=crown.y+(b.y-crown.y)*st.t;
       const segLen = Math.hypot(sx-carry.x, sy-carry.y)||1;
       const segDir = Math.atan2(sy-carry.y, sx-carry.x);
-      // primary limb up to this station
-      limb(carry.x, carry.y, sx, sy, 13);
-      // a few twigs fanning sideways (inner clump only)
-      for(let k=0;k<2;k++){
-        const a=segDir + (rnd()*1.1-0.55);
-        const tl = segLen*(0.45+rnd()*0.4);
-        out.push(branch(sx,sy, tl, a, 2, 3));
+      // primary limb, thickness tapering outward
+      limb(carry.x, carry.y, sx, sy, st.w);
+      // a few twigs fanning sideways (inner clump only, near the trunk)
+      if(si<2){
+        for(let k=0;k<2;k++){
+          const a=segDir + (rnd()*1.1-0.55);
+          const tl = segLen*(0.45+rnd()*0.4);
+          out.push(branch(sx,sy, tl, a, 2, 3));
+        }
       }
       carry={x:sx,y:sy};
     });
-    // finish the clean outer limb out to the leaf arc point (no crown)
-    limb(carry.x, carry.y, b.x, b.y, 10);
+    // finish the clean thin outer limb out to the leaf arc point (no crown)
+    limb(carry.x, carry.y, b.x, b.y, 4);
     return {itemsTree: out, x:b.x, y:b.y};
   })};
 
@@ -278,9 +283,9 @@ function placeLeaves(leaves){
     // --- stem (from branch tip down to the leaf) ---
     el('path',{d:'M 0 0 C 1 8 2 16 0 26', class:'leafstem'}, bob);
 
-    // --- leaf + midrib: GIANT so it fills the hit area ---
+    // --- leaf + midrib: giant leaf, stem attaches to the far pointed tip ---
     const rot = (rnd()*20-10 + i*5)*(i%2?-1:1);
-    const lf = el('g',{class:'leafbody', transform:`translate(0 26) rotate(${rot})`}, bob);
+    const lf = el('g',{class:'leafbody', transform:`translate(56 26) rotate(${rot})`}, bob);
     el('path',{
       d:'M 0 0 C -26 -22 -48 -36 -56 0 C -48 34 -26 20 0 0 Z',
       class:'leafshape', fill:'#86e25a', stroke:'#1d5c20','stroke-width':'3'
@@ -288,10 +293,10 @@ function placeLeaves(leaves){
     el('path',{d:'M -55 0 L 0 0', class:'midrib','stroke':'#17651b','stroke-width':'2.4','opacity':'0.5'}, lf);
 
     // subtle white ring, shown on hover
-    el('ellipse',{cx:0,cy:26,rx:56,ry:60,class:'leafring',fill:'none'}, bob);
+    el('ellipse',{cx:0,cy:26,rx:60,ry:62,class:'leafring',fill:'none'}, bob);
 
     // emoji icon: hovers ABOVE the branch tip (negative y = above anchor)
-    const label = el('text',{class:'leaflabel','text-anchor':'middle',y:-44,fill:'#ffffff'}, bob);
+    const label = el('text',{class:'leaflabel','text-anchor':'middle',y:-22,fill:'#ffffff'}, bob);
     label.textContent = leaf.name || leaf.id;
 
     g.setAttribute('transform',`translate(${px} ${py})`);
