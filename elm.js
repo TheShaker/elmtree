@@ -272,15 +272,15 @@ function placeLeaves(leaves){
     // stays on the outer g, so the arc is never disturbed).
     const bob = el('g',{class:'leafbob'}, g);
 
-    // --- invisible hit target: generous circle covering the giant leaf + label ---
-    const hit = el('circle',{cx:0,cy:70,r:70,class:'leafhit',fill:'rgba(0,0,0,0)'}, bob);
+    // --- invisible hit target: generous circle covering leaf + icon ---
+    const hit = el('circle',{cx:0,cy:40,r:78,class:'leafhit',fill:'rgba(0,0,0,0)'}, bob);
 
-    // --- stem (drawn from branch node toward the leaf) ---
-    el('path',{d:'M 0 0 C 2 14 4 26 0 40', class:'leafstem'}, bob);
+    // --- stem (from branch tip down to the leaf) ---
+    el('path',{d:'M 0 0 C 1 8 2 16 0 26', class:'leafstem'}, bob);
 
-    // --- leaf + midrib: GIANT so it fills the hit circle ---
+    // --- leaf + midrib: GIANT so it fills the hit area ---
     const rot = (rnd()*20-10 + i*5)*(i%2?-1:1);
-    const lf = el('g',{class:'leafbody', transform:`translate(0 40) rotate(${rot})`}, bob);
+    const lf = el('g',{class:'leafbody', transform:`translate(0 26) rotate(${rot})`}, bob);
     el('path',{
       d:'M 0 0 C -26 -22 -48 -36 -56 0 C -48 34 -26 20 0 0 Z',
       class:'leafshape', fill:'#86e25a', stroke:'#1d5c20','stroke-width':'3'
@@ -288,10 +288,10 @@ function placeLeaves(leaves){
     el('path',{d:'M -55 0 L 0 0', class:'midrib','stroke':'#17651b','stroke-width':'2.4','opacity':'0.5'}, lf);
 
     // subtle white ring, shown on hover
-    el('ellipse',{cx:0,cy:40,rx:56,ry:60,class:'leafring',fill:'none'}, bob);
+    el('ellipse',{cx:0,cy:26,rx:56,ry:60,class:'leafring',fill:'none'}, bob);
 
-    // label
-    const label = el('text',{class:'leaflabel','text-anchor':'middle',y:116,fill:'#ffffff'}, bob);
+    // emoji icon: hovers ABOVE the branch tip (negative y = above anchor)
+    const label = el('text',{class:'leaflabel','text-anchor':'middle',y:-44,fill:'#ffffff'}, bob);
     label.textContent = leaf.name || leaf.id;
 
     g.setAttribute('transform',`translate(${px} ${py})`);

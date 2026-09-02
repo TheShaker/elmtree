@@ -18,10 +18,10 @@ body{
 .glow{position:fixed;inset:0;z-index:1;pointer-events:none;background:radial-gradient(600px 400px at 50% 78%, rgba(102,187,106,.10), transparent 70%)}
 
 /* ---------- Homepage ---------- */
-.tr-wrap{position:relative;z-index:2;max-width:1200px;margin:0 auto;padding:.6rem 1.5rem 0;display:flex;flex-direction:column;align-items:center;min-height:100vh}
-/* title — crisp, compact (tree gets ~3/4 of the viewport) */
-.tr-title{font-family:'Orbitron',sans-serif;font-size:2.4rem;font-weight:900;letter-spacing:.28em;text-transform:uppercase;color:#fff;text-shadow:0 0 28px rgba(102,187,106,.45);margin-top:.2rem}
-@media (max-width:640px){.tr-title{font-size:1.7rem;letter-spacing:.18em}}
+.tr-wrap{position:relative;z-index:2;max-width:1200px;margin:0 auto;padding:1.6rem 1.5rem 0;display:flex;flex-direction:column;align-items:center;min-height:100vh}
+/* title — dropped lower into the freed space above the hovering icons */
+.tr-title{font-family:'Orbitron',sans-serif;font-size:2.4rem;font-weight:900;letter-spacing:.28em;text-transform:uppercase;color:#fff;text-shadow:0 0 28px rgba(102,187,106,.45);margin-top:1.2rem}
+@media (max-width:640px){.tr-title{font-size:1.7rem;letter-spacing:.18em;margin-top:.8rem}}
 .tr-sub{font-family:'Inter',sans-serif;font-weight:300;letter-spacing:.5em;text-transform:uppercase;color:var(--dim);font-size:.68rem;margin-top:.28rem}
 
 /* Tree = hero, box is invisible (no border/bg/shadow). Planet anchors to base. */
