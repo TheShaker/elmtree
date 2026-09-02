@@ -14,6 +14,9 @@ export const LEAF_REGISTRY = [
   { id: 'frontdesk',  name: '🛎️' },
   { id: 'athletics',  name: '🏅' },
   { id: 'nurse',      name: '🩺' },
+  { id: 'library',    name: '📚' },
+  { id: 'cafeteria',  name: '🍽️' },
+  { id: 'music',      name: '🎵' },
 ];
 
 // Optional per-leaf assistant personas; falls back to a shared default.

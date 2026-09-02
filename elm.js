@@ -145,23 +145,15 @@ function genTree(){
   const crown={x:500, y:430};                 // trunk top
   limb(origin.x, origin.y, crown.x, crown.y, 30);
 
-  // ---------- Symmetric primary fan spanning the leaf arc ----------
-  // Leaves sit on the outer arc (cx,cy,rx,ry) below. Radiate a primary from the
-  // crown to each leaf-arc point so the outer row of branches IS the leaf row
-  // (no protruding dead primaries). The arc is a rounded top dome — tight enough
-  // that branches don't droop below the crown.
-  const leafArc={cx:500, cy:330, rx:340, ry:215};
-  // Symmetric top dome: angles from center, ±35°, ±70°. Using (x=cx+sinθ·rx,
-  // y=cy−cosθ·ry) keeps every leaf ABOVE the center so the dome reads as a clean
-  // outward row with no drooping branches below the crown.
-  const leafAngles=[-70,-35,0,35,70];          // degrees, left→right
-  const NPRIM = leafAngles.length;
+  // ---------- Symmetric primary fan spanning the leaf slot pool ----------
+  // A primary is grown from the crown out to each slot's leaf point (varied
+  // heights), so every leaf sits at a branch tip and nothing protrudes past.
   const prim=[];
-  for(let i=0;i<NPRIM;i++){
-    const deg=leafAngles[i], rad=deg*Math.PI/180;
-    const tx = leafArc.cx + Math.sin(rad)*leafArc.rx;
-    const ty = leafArc.cy - Math.cos(rad)*leafArc.ry;
-    prim.push({x:tx,y:ty,angle:deg});
+  for(let i=0;i<SLOT_POOL.length;i++){
+    const sl=SLOT_POOL[i];
+    const sp=slotXY(sl);
+    const tx=sp.x, ty=sp.y;
+    prim.push({x:tx,y:ty,angle:sl.deg});
     // outward direction from crown to the leaf point
     const dir = Math.atan2(ty-crown.y, tx-crown.x);
     const L = Math.hypot(tx-crown.x, ty-crown.y);
@@ -171,7 +163,7 @@ function genTree(){
     const by = crown.y + Math.sin(dir)*L*0.40;
     limb(crown.x, crown.y, bx, by, 13);
     prim[i].base={x: crown.x + Math.cos(dir)*L*0.92, y: crown.y + Math.sin(dir)*L*0.92};
-    prim[i].angle=deg;
+    prim[i].angle=sl.deg;
   }
 
   // ---------- Recursive branching: bush up each primary, starting way early ----------
@@ -244,6 +236,25 @@ function genTree(){
 // ---------- Leaf placement fixtures ----------
 window.ELM_LEAVES = window.ELM_LEAVES || null;
 
+// Shared leaf-slot pool: one slot per leaf, spread across a symmetric top dome.
+// Each slot has an angle AND a height factor, so leaves land at different
+// heights for a dynamic canopy while staying centered + branch-touched.
+const SLOT_POOL = [
+  { deg:-75, h:0.72 },
+  { deg:-52, h:0.98 },
+  { deg:-29, h:0.82 },
+  { deg:-8,  h:0.98 },
+  { deg: 8,  h:0.84 },
+  { deg: 29, h:0.95 },
+  { deg: 52, h:0.78 },
+  { deg: 75, h:0.9  },
+];
+const DOME={ cx:500, cy:330, rx:340, ry:215 };
+function slotXY(s){
+  const r=s.deg*Math.PI/180;
+  return { x:DOME.cx + Math.sin(r)*DOME.rx, y:DOME.cy - Math.cos(r)*DOME.ry*s.h };
+}
+
 function loadLeaves(){
   fetch('/api/leaves').then(r=>r.json()).then(json=>{
     const leaves = (json && json.leaves) || window.ELM_LEAVES || [];
@@ -256,19 +267,14 @@ function placeLeaves(leaves){
   const count = document.getElementById('leafCount');
   if(!leaves || !leaves.length){ svg.classList.add('grown'); return; }
 
-  // Place portal leaves exactly on the outer dome edge where primary branches end.
-  const cx=500, cy=330;                       // dome center (matches genTree leafArc)
-  const rx=340, ry=215;
-  // symmetric dome in degrees (matches genTree): each index = which leaf slot
-  const SLOT_ANGLES=[-70,-35,0,35,70];
+  // Place each portal leaf at its shared slot point (angle + varied height).
   let ok=0;
-  const N = Math.min(leaves.length, SLOT_ANGLES.length);
+  const N = Math.min(leaves.length, SLOT_POOL.length);
   for(let i=0;i<N;i++){
     const leaf=leaves[i];
     if(!leaf || !leaf.id) continue;
-    const rad = (SLOT_ANGLES[i]||0)*Math.PI/180;
-    const px = cx + Math.sin(rad)*rx;
-    const py = cy - Math.cos(rad)*ry;
+    const sp=slotXY(SLOT_POOL[i]||SLOT_POOL[SLOT_POOL.length-1]);
+    const px=sp.x, py=sp.y;
     const g = el('g',{class:'leafg','data-leaf':leaf.id}, groupMain);
     g.style.setProperty('--brot', i);
 
