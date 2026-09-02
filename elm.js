@@ -342,11 +342,13 @@ function placeLeaves(leaves){
     el('path',{d:'M 0 0 C 1 8 2 16 0 26', class:'leafstem'}, bob);
 
     // --- leaf + midrib: giant leaf, stem attaches to the far pointed tip ---
-    // REALISM: each portal leaf varies in size and green shade (seeded).
+    // REALISM: each portal leaf varies in size, green shade, and orientation.
+    // Orientation is fully randomized (seeded rnd → randomizes on every refresh)
+    // and decoupled from the slot index so leaves point every which way.
     const LEAF_TINTS=['#86e25a','#79d84f','#93ea6a','#6fd044','#8ae662'];
-    const rot = (rnd()*20-10 + i*5)*(i%2?-1:1);
+    const rot = (rnd()*150-75).toFixed(1);     // -75..+75 deg, fully random per leaf
     const scl = (0.88+rnd()*0.26).toFixed(2);
-    const lf = el('g',{class:'leafbody', transform:`translate(56 26) rotate(${rot.toFixed(1)}) scale(${scl})`}, bob);
+    const lf = el('g',{class:'leafbody', transform:`translate(56 26) rotate(${rot}) scale(${scl})`}, bob);
     el('path',{
       d:'M 0 0 C -26 -22 -48 -36 -56 0 C -48 34 -26 20 0 0 Z',
       class:'leafshape', fill:LEAF_TINTS[Math.floor(rnd()*LEAF_TINTS.length)], stroke:'#1d5c20','stroke-width':'3'
