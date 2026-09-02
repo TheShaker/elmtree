@@ -1,2 +1,4 @@
-/leaf      /leaf.html  200
-/leaf/     /leaf.html  200
+# NOTE: /leaf (and /shaker, /athletics, etc.) are served extensionless by
+# Cloudflare Pages' automatic clean-URL handling of leaf.html. Adding a static
+# rule here like "/leaf /leaf.html 200" combined with the auto .html->clean
+# redirect creates a 308 loop between /leaf and /leaf.html. Leave empty.

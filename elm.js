@@ -413,7 +413,7 @@ async function unlock(){
       // Static board pages for the leaves that have them; others fall back to
       // the locked leaf.html (which shows a lock prompt until a token proves in).
       const BOARD_PAGES = { shaker:'/shaker.html', athletics:'/athletics.html' };
-      const dest = BOARD_PAGES[activeLeaf.id] || ('/leaf.html?leaf='+encodeURIComponent(activeLeaf.id));
+      const dest = BOARD_PAGES[activeLeaf.id] || ('/leaf?leaf='+encodeURIComponent(activeLeaf.id));
       window.location.href = dest;
     } else {
       err.textContent = d.error || '✗ access denied';
