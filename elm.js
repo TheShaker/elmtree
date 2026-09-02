@@ -75,7 +75,7 @@ function genTree(){
   const foliage = el('g',{id:'elmFoliage'}, svg);
   const cx=500, cy=270;                       // crown center
   const canopyHerbs=['#3f9e43','#57b755','#2f7d34','#6ecf5a','#4caf50'];
-  for(let i=0;i<230;i++){
+  for(let i=0;i<95;i++){
     // elliptical crown: denser toward the middle, thinning at the edge
     let px,py,rr=Math.pow(rnd(),0.7);
     const ang=rnd()*Math.PI*2;
@@ -85,12 +85,26 @@ function genTree(){
     py=Math.min(610, Math.max(60,py));
     if(px<110||px>890) continue;
     const sz=rnd()*6+5;
-    el('path',{
+    const grofWrap=el('g',{transform:`translate(${px} ${py})`}, foliage);
+    const grof=el('path',{
       d:`M0 0 C ${-sz*0.6} ${-sz*0.5} ${-sz} ${-sz*0.3} ${-sz*0.5} 0 C 0 ${sz*0.45} ${sz*0.5} ${sz*0.2} 0 0 Z`,
       fill:canopyHerbs[Math.floor(rnd()*canopyHerbs.length)],
-      opacity:0.7+rnd()*0.3,
-      transform:`translate(${px} ${py}) rotate(${rnd()*90-45})`
-    }, foliage);
+      opacity:0.5+rnd()*0.3,
+      transform:`translate(0 0) rotate(${rnd()*90-45})`
+    }, grofWrap);
+    // ~1 in 6 canopy leaves gently drifts + fades (subtle falling effect)
+    if(rnd()<0.16){
+      grof.classList.add('leaf-fall');
+      grof.style.setProperty('--fx0', '0px');
+      grof.style.setProperty('--fy0', '0px');
+      grof.style.setProperty('--fx1', (rnd()*26-13).toFixed(0)+'px');
+      grof.style.setProperty('--fy1', (24+rnd()*46).toFixed(0)+'px');
+      grof.style.setProperty('--fr0', '0deg');
+      grof.style.setProperty('--fr1', (rnd()*36-18).toFixed(0)+'deg');
+      grof.style.setProperty('--fdur', (7+rnd()*7).toFixed(1)+'s');
+      grof.style.setProperty('--fdel', (rnd()*6).toFixed(1)+'s');
+      grof.style.setProperty('--fomax', (0.25+rnd()*0.2).toFixed(2));
+    }
   }
 
   // branch defs
@@ -145,9 +159,9 @@ function genTree(){
     const n = depth>4 ? 3 : (depth>3 ? 3 : (rnd()<.5?2:3));
     const kids=[];
     for(let i=0;i<n;i++){
-      const spread = depth>4 ? 0.6 : 0.45 + rnd()*0.35;
+      const spread = depth>4 ? 0.85 : 0.6 + rnd()*0.5;
       const na = ang + (rnd()*2-1)*spread;
-      const nl = len * (0.66 + rnd()*0.16);
+      const nl = len * (0.7 + rnd()*0.18);
       const nw = Math.max(1.2, width*0.70);
       kids.push(branch(ex,ey,nl,na,depth-1,nw));
     }
@@ -192,30 +206,32 @@ function loadLeaves(){
 
 function placeLeaves(leaves){
   const {svg, groupMain} = TREE;
-  const terms = TREE.terminals;
   const count = document.getElementById('leafCount');
-  if(!terms.length){ svg.classList.add('grown'); return; }
+  const N = leaves.length;
+  if(!N){ svg.classList.add('grown'); return; }
 
-  const N = Math.min(leaves.length || 0, terms.length);
-  // deterministic spread left→right across the canopy
-  const sorted = terms.slice().sort((a,b)=>a.x-b.x);
-  const picks=[];
-  for(let i=0;i<N;i++){
-    let ti = Math.floor(i*(sorted.length/N) + rnd()*(sorted.length/N));
-    ti = Math.min(ti, sorted.length-1);
-    picks.push({leaf:leaves[i], term:sorted[ti]});
-  }
-
+  // Place every portal leaf on an outer semicircle around the crown so they
+  // never overlap and the layout stays radially symmetric as leaves are added.
+  // Arc: centered on the crown, opening downward; angle sweeps the top half.
+  const cx=500, cy=290;              // crown center
+  const rx=392, ry=300;              // semi-ellipse reach (full canopy width)
+  const startA=Math.PI, endA=0;      // left -> top -> right (top of tree = up)
   let ok=0;
-  picks.forEach(({leaf, term}, idx)=>{
-    if(!leaf || !leaf.id) return;
+  for(let i=0;i<N;i++){
+    const leaf=leaves[i];
+    if(!leaf || !leaf.id) continue;
+    // evenly slot each leaf across the top semicircle
+    const frac = N>1 ? i/(N-1) : 0.5;
+    const a = startA + (endA-startA)*frac;
+    const px = cx + Math.cos(a)*rx;
+    const py = cy - Math.sin(a)*ry;
     const g = el('g',{class:'leafg','data-leaf':leaf.id}, groupMain);
 
-    // --- stem ---
+    // --- stem (drawn from branch node toward the leaf) ---
     el('path',{d:'M 0 0 C 1 9 2 16 0 24', class:'leafstem'}, g);
 
     // --- leaf + midrib ---
-    const rot = (rnd()*24-12 + idx*6)*(idx%2?-1:1);
+    const rot = (rnd()*24-12 + i*6)*(i%2?-1:1);
     const lf = el('g',{class:'leafbody', transform:`translate(0 24) rotate(${rot})`}, g);
     el('path',{
       d:'M 0 0 C -13 -11 -24 -18 -28 0 C -24 17 -13 10 0 0 Z',
@@ -230,15 +246,14 @@ function placeLeaves(leaves){
     const label = el('text',{class:'leaflabel','text-anchor':'middle',dy:74,fill:'#ffffff'}, g);
     label.textContent = leaf.name || leaf.id;
 
-    const tx=term.x, ty=term.y;
-    g.setAttribute('transform',`translate(${tx} ${ty})`);
+    g.setAttribute('transform',`translate(${px} ${py})`);
 
     g.addEventListener('click', ()=> openGate(leaf));
     g.addEventListener('mouseenter', ()=> g.classList.add('hov'));
     g.addEventListener('mouseleave', ()=> g.classList.remove('hov'));
     LEAVES_BY_NAME[leaf.id]=g;
     ok++;
-  });
+  }
 
   svg.classList.add('grown');
   count.textContent = ok;
