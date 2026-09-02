@@ -12,16 +12,14 @@ const rnd = mulberry32(1337);
   const ctx = cvs.getContext('2d');
   let W,H,stars=[];
   function size(){ W=cvs.width=cvs.offsetWidth; H=cvs.height=cvs.offsetHeight; }
-  function makeStars(){ stars=[]; const n=Math.floor((W*H)/3200); for(let i=0;i<n;i++) stars.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.3+.3,a:Math.random(),t:Math.random()*6.28,s:.005+Math.random()*.02}); }
+  function makeStars(){ stars=[]; const n=Math.floor((W*H)/3200); for(let i=0;i<n;i++) stars.push({x:rnd()*W,y:rnd()*H,r:rnd()*1.3+.3,t:rnd()*6.28,s:.005+rnd()*.02}); }
   size(); window.addEventListener('resize',()=>{size();makeStars();});
   makeStars();
-  const c=0;
-  function draw(t){
+  function draw(){
     ctx.clearRect(0,0,W,H);
     for(const s of stars){
       s.t+=s.s;
-      const a=0.35+0.55*Math.abs(Math.sin(s.t));
-      ctx.globalAlpha=a;
+      ctx.globalAlpha=0.35+0.55*Math.abs(Math.sin(s.t));
       ctx.fillStyle='#cfe8ff';
       ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,6.283); ctx.fill();
     }
@@ -48,60 +46,139 @@ function genTree(){
   svg.setAttribute('viewBox','0 0 1000 860');
   svg.setAttribute('preserveAspectRatio','xMidYMax meet');
 
-  // Green planet for the tree to rest on (large sphere near the bottom).
-  const planet = el('g',{id:'elmPlanet'}, svg);
   const defs = el('defs',{}, svg);
+
+  // Wood gradient + a subtle bark noise for texture
+  const wood = el('linearGradient',{id:'woodGrad',x1:'0',y1:'0',x2:'1',y2:'1'}, defs);
+  el('stop',{offset:'0%','stop-color':'#6b4c2a'}, wood);
+  el('stop',{offset:'50%','stop-color':'#4a3418'}, wood);
+  el('stop',{offset:'100%','stop-color':'#2e1f0e'}, wood);
+
+  // Green planet for the tree to rest on
+  const planet = el('g',{id:'elmPlanet'}, svg);
   const grad = el('radialGradient',{id:'planetGrad',cx:'38%',cy:'32%',r:'75%'}, defs);
-  el('stop',{offset:'0%','stop-color':'#9be0a8'}, grad);
+  el('stop',{offset:'0%','stop-color':'#8fd6a0'}, grad);
   el('stop',{offset:'55%','stop-color':'#3d9c4f'}, grad);
   el('stop',{offset:'100%','stop-color':'#14521f'}, grad);
-  el('circle',{cx:500,cy:880,r:300,fill:'url(#planetGrad)'}, planet);
+  const planetCircle = el('circle',{cx:500,cy:880,r:300,fill:'url(#planetGrad)'}, planet);
+  // planet surface speckle (crater-dots like the Mercury map vibe)
+  for(let i=0;i<40;i++){
+    const a=rnd()*Math.PI*2, rr=Math.sqrt(rnd())*300;
+    const px=500+Math.cos(a)*rr*0.9, py=880+Math.sin(a)*rr*0.9;
+    if(py>740) el('circle',{cx:px,cy:py,r:rnd()*3+1,fill:'rgba(0,40,15,'+(0.06+rnd()*0.1)+')'}, planet);
+  }
 
   // trunk base (sits on the planet horizon)
-  const origin = {x:500, y:610};
+  const origin = {x:500, y:660};
+
+  // ---------- Canopy underlay: a dense, rounded elm crown of small leaves ----------
+  const foliage = el('g',{id:'elmFoliage'}, svg);
+  const cx=500, cy=270;                       // crown center
+  const canopyHerbs=['#3f9e43','#57b755','#2f7d34','#6ecf5a','#4caf50'];
+  for(let i=0;i<230;i++){
+    // elliptical crown: denser toward the middle, thinning at the edge
+    let px,py,rr=Math.pow(rnd(),0.7);
+    const ang=rnd()*Math.PI*2;
+    // mostly fill the ellipse, some scatter outward near branch tips
+    px=cx+Math.cos(ang)*(90+rnd()*175)*rr;
+    py=cy+Math.sin(ang)*(60+rnd()*125)*rr;
+    py=Math.min(610, Math.max(60,py));
+    if(px<110||px>890) continue;
+    const sz=rnd()*6+5;
+    el('path',{
+      d:`M0 0 C ${-sz*0.6} ${-sz*0.5} ${-sz} ${-sz*0.3} ${-sz*0.5} 0 C 0 ${sz*0.45} ${sz*0.5} ${sz*0.2} 0 0 Z`,
+      fill:canopyHerbs[Math.floor(rnd()*canopyHerbs.length)],
+      opacity:0.7+rnd()*0.3,
+      transform:`translate(${px} ${py}) rotate(${rnd()*90-45})`
+    }, foliage);
+  }
 
   // branch defs
   const groupMain = el('g',{id:'elmMain'}, svg);
+  const nodes = [];   // every branch endpoint (for canopy-tip leaves)
+  nodes.push({x:origin.x,y:origin.y,depth:99,ang:-Math.PI/2});
 
   function branch(x,y,len,ang,depth,width){
     const ex = x + Math.cos(ang)*len;
     const ey = y + Math.sin(ang)*len;
-    // draw branch
-    el('path',{
-      d:`M${x} ${y} C ${x+Math.cos(ang)*len*0.5} ${y+Math.sin(ang)*len*0.4}, ${x+Math.cos(ang)*len*0.8} ${y+Math.sin(ang)*len*0.8}, ${ex} ${ey}`,
-      fill:'none', stroke:'#4a3a28', 'stroke-width':width,
-      'stroke-linecap':'round'
-    }, groupMain);
+    nodes.push({x:ex,y:ey,depth,ang});
+
+    if(width>=3){
+      // Tapered filled limb = solid, textured trunk & branches
+      const nx=-Math.sin(ang)*0.5, ny=Math.cos(ang)*0.5; // unit-ish perpendicular
+      const p0a=`${x+nx*width} ${y+ny*width}`;
+      const p0b=`${x-nx*width} ${y-ny*width}`;
+      const p1a=`${ex+nx*(width*0.6)} ${ey+ny*(width*0.6)}`;
+      const p1b=`${ex-nx*(width*0.6)} ${ey-ny*(width*0.6)}`;
+      el('path',{
+        d:`M${p0a} L${p1a} L${p1b} L${p0b} Z`,
+        fill:'url(#woodGrad)', stroke:'rgba(20,12,5,.6)','stroke-width':'0.8'
+      }, groupMain);
+      // bark ridge highlight down the limb
+      el('path',{
+        d:`M${x} ${y} C ${x+Math.cos(ang)*len*0.5} ${y+Math.sin(ang)*len*0.5}, ${ex-Math.cos(ang)*len*0.15} ${ey-Math.sin(ang)*len*0.15}, ${ex} ${ey}`,
+        fill:'none', stroke:'rgba(255,240,210,.16)','stroke-width':Math.max(1,width*0.3),'stroke-linecap':'round'
+      }, groupMain);
+      // bark grain: short dark notches along the limb for real texture
+      if(width>=8){
+        const steps=Math.max(2,Math.floor(len/22));
+        for(let s=1;s<steps;s++){
+          const t=s/steps;
+          const mx=x+(ex-x)*t, my=y+(ey-y)*t;
+          const jag=rnd()*2.4*width-1.2*width;
+          el('path',{
+            d:`M${mx+jag} ${my+1} Q ${mx+jag*0.4} ${my+rnd()*6} ${mx+jag} ${my-1}`,
+            fill:'none', stroke:'rgba(20,12,5,.5)','stroke-width':Math.max(1,width*0.12),'stroke-linecap':'round'
+          }, groupMain);
+        }
+      }
+    } else {
+      // twig: plain tapered line
+      el('path',{
+        d:`M${x} ${y} C ${x+Math.cos(ang)*len*0.5} ${y+Math.sin(ang)*len*0.4}, ${ex-Math.cos(ang)*len*0.2} ${ey-Math.sin(ang)*len*0.2}, ${ex} ${ey}`,
+        fill:'none', stroke:'#3a2615','stroke-width':width,'stroke-linecap':'round'
+      }, groupMain);
+    }
 
     if(depth<=0) return {x:ex,y:ey};
 
     const n = depth>4 ? 3 : (depth>3 ? 3 : (rnd()<.5?2:3));
     const kids=[];
     for(let i=0;i<n;i++){
-      const spread = depth>4 ? 0.55 : rnd()*.7+.4;
-      const na = ang + (Math.random()*2-1)*spread;
-      const nl = len * (0.66 + rnd()*0.18);
+      const spread = depth>4 ? 0.6 : 0.45 + rnd()*0.35;
+      const na = ang + (rnd()*2-1)*spread;
+      const nl = len * (0.66 + rnd()*0.16);
       const nw = Math.max(1.2, width*0.70);
-      const child = branch(ex,ey,nl,na,depth-1,nw);
-      kids.push(child);
+      kids.push(branch(ex,ey,nl,na,depth-1,nw));
     }
     return {x:ex,y:ey, kids};
   }
-  const root = branch(origin.x, origin.y, 210, -Math.PI/2, 6, 26, []);
+  const root = branch(origin.x, origin.y, 205, -Math.PI/2, 6, 30);
 
-  // collect terminal leaf positions
+  // ---------- Canopy-tip tufts: small leaves right on twig ends ----------
+  nodes.forEach(nd=>{
+    if(nd.depth>=98||nd.depth<=0) return;
+    // every deep node carries a little leaf tuft poking out of the twig end
+    const sz=rnd()*4+5;
+    const c=rnd();
+    el('ellipse',{
+      cx:nd.x, cy:nd.y,
+      rx:sz*0.7, ry:sz,
+      fill:c<0.5?(c<0.25?'#388e3c':'#66bb6a'):'#4caf50',
+      opacity:0.6+rnd()*0.4,
+      transform:`rotate(${rnd()*28-14})`
+    }, foliage);
+  });
+
+  // collect terminal positions (portal leaf anchors) from the real root
   const terminals=[];
-  function walk(n){
+  (function walk(n){
     if(n.kids && n.kids.length){ n.kids.forEach(walk); }
     else terminals.push(n);
-  }
-  walk(root);
+  })(root);
 
-  return {svg, groupMain, terminals};
+  return {svg, groupMain, terminals, foliage, root};
 }
-
-// per-leaf sway + label handled by caller after leaves fixture is known
-const TREE = genTree();
 
 // ---------- Leaf placement fixtures ----------
 window.ELM_LEAVES = window.ELM_LEAVES || null;
@@ -114,20 +191,17 @@ function loadLeaves(){
 }
 
 function placeLeaves(leaves){
-  const terms = TREE.terminals;
-  if(!terms.length) return;
   const {svg, groupMain} = TREE;
+  const terms = TREE.terminals;
   const count = document.getElementById('leafCount');
+  if(!terms.length){ svg.classList.add('grown'); return; }
 
   const N = Math.min(leaves.length || 0, terms.length);
-  // Distribute leaves across the full canopy: bucket terminals by x-position
-  // and pick a spread that covers left→right instead of a linear stride (which
-  // clusters near one branch).
-  const sorted = terms.slice().sort((a,b) => a.x - b.x);
-  const picks = [];
+  // deterministic spread left→right across the canopy
+  const sorted = terms.slice().sort((a,b)=>a.x-b.x);
+  const picks=[];
   for(let i=0;i<N;i++){
-    // evenly-spaced indices across the sorted (by x) terminals
-    let ti = Math.floor(i * (sorted.length / N) + (Math.random() * (sorted.length/N)));
+    let ti = Math.floor(i*(sorted.length/N) + rnd()*(sorted.length/N));
     ti = Math.min(ti, sorted.length-1);
     picks.push({leaf:leaves[i], term:sorted[ti]});
   }
@@ -135,43 +209,49 @@ function placeLeaves(leaves){
   let ok=0;
   picks.forEach(({leaf, term}, idx)=>{
     if(!leaf || !leaf.id) return;
-    const g = el('g',{class:'leafg', 'data-leaf':leaf.id}, groupMain);
+    const g = el('g',{class:'leafg','data-leaf':leaf.id}, groupMain);
 
-    // leaf shape (two arcs) rotated toward branch — large
-    const rot = (Math.random()*30-15 + idx*7)* (idx%2? -1:1);
-    const leafShape = el('path',{
-      d:'M 0 0 C -22 -18 -38 -30 -44 0 C -38 28 -22 16 0 0 Z',
-      class:'leafshape', fill:'#86e25a', stroke:'#14521f', 'stroke-width':'2', transform:`rotate(${rot})`
-    }, g);
+    // --- stem ---
+    el('path',{d:'M 0 0 C 1 9 2 16 0 24', class:'leafstem'}, g);
 
-    // soft glow backing — large
-    el('circle',{cx:0,cy:0,r:80,class:'leafhalo',fill:'rgba(255,255,255,.12)'}, g);
+    // --- leaf + midrib ---
+    const rot = (rnd()*24-12 + idx*6)*(idx%2?-1:1);
+    const lf = el('g',{class:'leafbody', transform:`translate(0 24) rotate(${rot})`}, g);
+    el('path',{
+      d:'M 0 0 C -13 -11 -24 -18 -28 0 C -24 17 -13 10 0 0 Z',
+      class:'leafshape', fill:'#86e25a', stroke:'#1d5c20','stroke-width':'1.6'
+    }, lf);
+    el('path',{d:'M -27 0 L 1 0', class:'midrib','stroke':'#1d5c20','stroke-width':'1','opacity':'0.5'}, lf);
 
-    // label — large, bright white
-    const label = el('text',{class:'leaflabel','text-anchor':'middle',dy:92,fill:'#ffffff'}, g);
+    // subtle white ring, shown on hover
+    el('ellipse',{cx:0,cy:24,rx:30,ry:34,class:'leafring',fill:'none'}, g);
+
+    // label
+    const label = el('text',{class:'leaflabel','text-anchor':'middle',dy:74,fill:'#ffffff'}, g);
     label.textContent = leaf.name || leaf.id;
 
-    // stem connector
-    el('path',{d:`M 0 0 L 0 ${4+Math.random()*8}`,class:'leafstem'}, g);
-
-    const tx = term.x, ty = term.y;
+    const tx=term.x, ty=term.y;
     g.setAttribute('transform',`translate(${tx} ${ty})`);
 
-    g.addEventListener('click', ()=>{
-      openGate(leaf);
-    });
-    g.addEventListener('mouseenter', ()=>{
-      g.classList.add('hov');
-    });
-    g.addEventListener('mouseleave', ()=>{ g.classList.remove('hov'); });
-    LEAVES_BY_NAME[leaf.id] = g;
+    g.addEventListener('click', ()=> openGate(leaf));
+    g.addEventListener('mouseenter', ()=> g.classList.add('hov'));
+    g.addEventListener('mouseleave', ()=> g.classList.remove('hov'));
+    LEAVES_BY_NAME[leaf.id]=g;
     ok++;
   });
 
-  // grow-in
   svg.classList.add('grown');
   count.textContent = ok;
 }
+
+const TREE = (function(){
+  // build the real root + terminals exactly like genTree does
+  const svg = document.getElementById('trSvg');
+  const inst = genTree();
+  // terminals are filled by the walk referencing branch terminal recursion;
+  // collectTree is defined below, but genTree built its own; here we rebuild from inst's nodes class tree.
+  return inst;
+})();
 
 // ---------- Lock gate ----------
 let activeLeaf=null;

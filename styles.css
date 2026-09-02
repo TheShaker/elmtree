@@ -19,14 +19,17 @@ body{
 
 /* ---------- Homepage ---------- */
 .tr-wrap{position:relative;z-index:2;max-width:1200px;margin:0 auto;padding:1.2rem 1.5rem 0;display:flex;flex-direction:column;align-items:center;min-height:100vh}
-.tr-title{font-family:'Orbitron',sans-serif;font-size:3.2rem;font-weight:900;letter-spacing:.32em;text-transform:uppercase;color:var(--ink);text-shadow:0 0 24px rgba(102,187,106,.35)}
-@media (max-width:640px){.tr-title{font-size:2.2rem;letter-spacing:.2em}}
-.tr-sub{font-family:'Inter',sans-serif;font-weight:300;letter-spacing:.5em;text-transform:uppercase;color:var(--dim);font-size:.7rem;margin-top:.4rem}
+/* title — crisp, clear on its own line */
+.tr-title{font-family:'Orbitron',sans-serif;font-size:3.4rem;font-weight:900;letter-spacing:.34em;text-transform:uppercase;color:#fff;text-shadow:0 0 28px rgba(102,187,106,.45)}
+@media (max-width:640px){.tr-title{font-size:2.4rem;letter-spacing:.2em}}
+.tr-sub{font-family:'Inter',sans-serif;font-weight:300;letter-spacing:.5em;text-transform:uppercase;color:var(--dim);font-size:.72rem;margin-top:.45rem}
 
-/* Tree = hero: flex-grow fills the viewport, planet anchored to the bottom.
-   preserveAspectRatio xMidYMax meet keeps the sphere flush to the base. */
-.tr-tree{flex:1;width:100%;max-width:1200px;min-height:0;display:flex;align-items:flex-end}
-#trSvg{width:100%;height:auto;max-height:82vh;overflow:visible}
+/* Tree = hero, contained in a subtle bounding box. Planet anchors to the base. */
+.tr-tree{flex:1;width:100%;max-width:1180px;min-height:0;display:flex;align-items:flex-end;margin:1rem 0 0;
+  position:relative;border:1px solid rgba(255,255,255,.08);border-radius:22px;
+  background:linear-gradient(180deg, rgba(12,18,26,.35), rgba(6,10,14,.15));
+  box-shadow:inset 0 0 60px rgba(0,0,0,.5), 0 0 0 1px rgba(0,0,0,.4)}
+#trSvg{width:100%;height:auto;max-height:78vh;overflow:visible}
 
 /* branch stroke aging via CSS — subtle */
 #elmMain path{transition:opacity .6s}
@@ -34,15 +37,19 @@ body{
 .leafg{opacity:0;cursor:pointer;transform-origin:center}
 #trSvg.grown .leafg{animation:leafIn .9s ease forwards;transition:opacity .6s}
 @keyframes leafIn{from{opacity:0}to{opacity:1}}
-.leafg .leafhalo{fill:rgba(255,255,255,.10);pointer-events:none;transition:fill .3s}
-.leafg .leafshape{fill:#7ed957;stroke:rgba(0,0,0,.3);stroke-width:2;transition:fill .25s,filter .25s;pointer-events:none}
-.leafg .leafstem{stroke:rgba(160,120,70,.6);stroke-width:3;fill:none}
-.leafg .leaflabel{fill:rgba(255,255,255,.95);font-size:22px;font-weight:700;font-family:'Orbitron',sans-serif;letter-spacing:.05em;pointer-events:none;transition:fill .25s;text-shadow:0 1px 6px rgba(0,0,0,.9),0 0 16px rgba(0,0,0,.85)}
+/* stem */
+.leafg .leafstem{stroke:#7a5433;stroke-width:2.4;fill:none;stroke-linecap:round}
+/* leaf body + midrib */
+.leafg .leafshape{transition:fill .22s,filter .22s;pointer-events:none}
+.leafg .midrib{pointer-events:none}
+/* ring: hidden by default, appears as a soft outline on hover */
+.leafg .leafring{stroke:rgba(255,255,255,0);stroke-width:1.6;transition:stroke .22s,opacity .22s;opacity:0;pointer-events:none}
+.leafg .leaflabel{fill:rgba(255,255,255,.95);font-size:22px;font-weight:700;font-family:'Orbitron',sans-serif;letter-spacing:.05em;pointer-events:none;transition:fill .2s;text-shadow:0 1px 6px rgba(0,0,0,.9),0 0 16px rgba(0,0,0,.85)}
 
-/* hover */
+/* hover — clean: brighten leaf, open a ring, lift label */
 .leafg.hov{opacity:1}
-.leafg.hov .leafhalo{fill:rgba(255,213,79,.22)}
-.leafg.hov .leafshape{fill:var(--amber);filter:drop-shadow(0 0 10px rgba(255,213,79,.9))}
+.leafg.hov .leafshape{fill:#aef17a;filter:drop-shadow(0 0 14px rgba(160,255,120,.85))}
+.leafg.hov .leafring{opacity:1;stroke:rgba(255,255,255,.85)}
 .leafg.hov .leaflabel{fill:#fff}
 
 .tr-sts{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--faint);letter-spacing:.12em;margin-top:1.4rem;text-transform:uppercase;display:flex;align-items:center;gap:.5rem}
