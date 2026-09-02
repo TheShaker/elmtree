@@ -6,30 +6,125 @@
 <title>LEAF · ELMTREE</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600&family=JetBrains+Mono:wght@400;500&family=Patrick+Hand&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600&family=JetBrains+Mono:wght@400;500&family=Patrick+Hand&family=Shadows+Into+Light&display=swap" rel="stylesheet">
 <style>
-  body{background:radial-gradient(900px 600px at 30% -10%, #16222c 0%, #0b0f14 50%, #06090d 100%)}
+:root{
+  --void:#3a2413;--t1:#2b2119;--t2:rgba(43,33,25,.6);--t3:rgba(43,33,25,.35);
+  --ok:#1f8a4c;--err:#c0392b;--card-y:#fff3a3;--card-p:#ffc9d8;--card-b:#cfe5ff;
+  --card-g:#d4f2c8;--card-o:#ffe0b3;--tape:rgba(255,255,255,.55);--n-purple:#7b2ff7;--n-blue:#2196f3;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:'Inter',sans-serif;color:var(--t1);min-height:100vh;overflow-x:hidden;
+  background:
+    radial-gradient(1200px 700px at 50% -10%, rgba(255,255,255,.06), transparent 60%),
+    repeating-linear-gradient(45deg, rgba(0,0,0,.05) 0 2px, transparent 2px 7px),
+    repeating-linear-gradient(-45deg, rgba(255,255,255,.02) 0 2px, transparent 2px 6px),
+    repeating-linear-gradient(0deg, rgba(0,0,0,.03) 0 1px, transparent 1px 5px),
+    #a4703c;
+}
+.boardframe{max-width:1180px;margin:0 auto;padding:1.4rem 1.5rem 3rem}
+.toolbar{background:rgba(58,36,19,.85);border:1px solid rgba(0,0,0,.4);border-radius:14px;padding:.8rem 1rem;margin-bottom:1.1rem;display:flex;align-items:center;justify-content:space-between;gap:.8rem;flex-wrap:wrap;box-shadow:0 6px 20px rgba(0,0,0,.3)}
+.toolbar h1{font-family:'Orbitron',sans-serif;font-size:1.15rem;letter-spacing:.12em;color:#ffe9c4;text-transform:uppercase;display:flex;align-items:center;gap:.5rem}
+.toolbar .sub{color:rgba(255,233,196,.6);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;margin-top:.2rem}
+.actions{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
+.saved{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:#8bf0b0;opacity:0;transition:opacity .3s}.saved.on{opacity:1}
+button{font-family:'JetBrains Mono',monospace;font-size:.72rem;letter-spacing:.04em;padding:.4rem .8rem;border-radius:8px;border:1px solid rgba(0,0,0,.35);background:rgba(255,255,255,.85);color:var(--t1);cursor:pointer;transition:all .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+button:hover{background:#fff;transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.25)}
+a.back{color:rgba(255,233,196,.9);text-decoration:none;font-family:'Orbitron',sans-serif;font-size:.7rem;letter-spacing:.08em}
+a.back:hover{color:#fff}
+
+.scratch{background:var(--card-y);border:1px solid rgba(0,0,0,.12);border-radius:8px;padding:.7rem 1rem .75rem;position:relative;box-shadow:0 6px 18px rgba(0,0,0,.3);transform:rotate(.3deg);width:100%;margin:.3rem 0 1.6rem}
+.scratch::before{content:'';position:absolute;top:-9px;left:50%;transform:translateX(-50%) rotate(1deg);width:74px;height:18px;background:var(--tape);box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.scratchhead{font-family:'Shadows Into Light',cursive;font-size:1.2rem;color:rgba(53,43,26,.7);margin-bottom:.4rem}
+.scratchrow{display:flex;align-items:stretch;gap:.8rem}
+#scratch{flex:1;background:rgba(255,255,255,.32);border:none;border-bottom:1px dashed rgba(0,0,0,.25);color:#35291a;font-family:'Patrick Hand',cursive;font-size:1.2rem;min-height:2.6em;resize:vertical;padding:.35rem .5rem;outline:none;line-height:1.4}
+#scratch:focus{background:rgba(255,255,255,.5)}
+
+.board{display:flex;gap:1.1rem;align-items:flex-start;overflow-x:auto;padding-bottom:1rem}
+.col{flex:1 1 270px;min-width:250px;max-width:310px;background:rgba(255,248,230,.45);border:1px solid rgba(0,0,0,.18);border-radius:14px;padding:.7rem;display:flex;flex-direction:column;gap:.6rem;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+.coltitle{font-family:'Shadows Into Light',cursive;font-size:1.3rem;letter-spacing:.02em;background:transparent;border:none;outline:none;color:var(--t1);border-bottom:1px dashed rgba(0,0,0,.2)}
+.colcount{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:rgba(43,33,25,.5)}
+.cards{display:flex;flex-direction:column;gap:.7rem;min-height:30px}
+.colempty{font-family:'Shadows Into Light',cursive;color:rgba(43,33,25,.4);font-size:1rem;text-align:center;padding:.4rem;display:none}
+.card{background:var(--card-y);color:#352b1a;border:1px solid rgba(0,0,0,.1);border-radius:2px;padding:.5rem .6rem;position:relative;box-shadow:0 4px 10px rgba(0,0,0,.28);transform:rotate(-1deg)}
+.card.c-pink{--card-y:var(--card-p)}.card.c-blue{--card-y:var(--card-b)}.card.c-green{--card-y:var(--card-g)}.card.c-orange{--card-y:var(--card-o)}
+.card:hover{transform:rotate(0) translateY(-2px);box-shadow:0 8px 18px rgba(0,0,0,.35)}
+.card::before{content:'';position:absolute;top:-9px;left:50%;transform:translateX(-50%) rotate(-2deg);width:64px;height:15px;background:var(--tape);box-shadow:0 1px 3px rgba(0,0,0,.2);opacity:.9}
+.ctext{width:100%;background:transparent;border:none;outline:none;color:inherit;font-family:'Patrick Hand',cursive;font-size:1.18rem;min-height:1.2em;resize:none;line-height:1.3}
+.cmeta{display:flex;justify-content:space-between;align-items:center;margin-top:.25rem;gap:.3rem;flex-wrap:wrap}
+.cmeta-left{display:flex;align-items:center;gap:.35rem;flex-wrap:wrap}
+.cnotes{width:100%;background:rgba(0,0,0,.06);border:1px solid rgba(0,0,0,.12);border-radius:4px;color:rgba(53,43,26,.75);font-family:'JetBrains Mono',monospace;font-size:.66rem;padding:.3rem .45rem;margin-top:.35rem;min-height:2em;resize:vertical;outline:none}
+.cnotes:focus{background:rgba(255,255,255,.4)}
+.ctagsel{font-family:'JetBrains Mono',monospace;font-size:.64rem;background:rgba(255,255,255,.6);color:var(--t1);border:1px solid rgba(0,0,0,.2);border-radius:5px;padding:.12rem .25rem;outline:none;cursor:pointer;max-width:7em}
+.tagchip{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:.6rem;padding:.08rem .4rem;border-radius:20px;letter-spacing:.02em;background:rgba(0,0,0,.08);border:1px solid rgba(0,0,0,.15)}
+.cdue{font-family:'JetBrains Mono',monospace;font-size:.64rem;padding:.1rem .35rem;border-radius:6px;background:rgba(0,0,0,.07);border:1px solid transparent;cursor:pointer}
+.cdue.due{color:#1f5d8a;border-color:rgba(31,93,138,.4)}
+.cdue.soon{color:#b06a00;background:rgba(255,180,0,.15);border-color:rgba(176,106,0,.5);font-weight:600}
+.cdue.over{color:#fff;background:var(--err);border-color:var(--err);font-weight:700}
+.prio{font-size:.6rem;line-height:1;padding:.08rem .22rem;box-shadow:none;background:rgba(0,0,0,.06);border:1px solid rgba(0,0,0,.15);border-radius:4px;color:rgba(43,33,25,.75);cursor:pointer}
+.prio:hover{background:rgba(0,0,0,.16);color:var(--t1)}
+.prio:disabled{opacity:.3;cursor:default;background:rgba(0,0,0,.03)}
+.mini{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;padding:0;line-height:1;font-size:.75rem;opacity:.5;background:transparent;box-shadow:none;border:none;border-radius:6px}
+.mini:hover{opacity:1;color:var(--err);background:rgba(0,0,0,.1)}
+.addcard{background:rgba(255,255,255,.5);border:1px dashed rgba(0,0,0,.3);border-radius:6px;color:rgba(43,33,25,.6);padding:.4rem;font-size:.68rem;cursor:pointer;text-align:left;font-family:'JetBrains Mono',monospace;box-shadow:none}
+.addcard:hover{color:var(--n-blue);background:rgba(255,255,255,.7)}
+.filter{font-family:'JetBrains Mono',monospace;font-size:.68rem;padding:.32rem .5rem;border-radius:8px;border:1px solid rgba(0,0,0,.3);background:#fff;color:var(--t1);cursor:pointer}
+@media (max-width:700px){.board{flex-direction:column;align-items:stretch}.col{max-width:none}}
+
+/* ---------- assistant chat ---------- */
+.lf-main{display:grid;grid-template-columns:1fr 360px;gap:1.1rem;align-items:start;margin-top:1.2rem}
+@media (max-width:900px){.lf-main{grid-template-columns:1fr}}
+.chat{display:flex;flex-direction:column;height:560px;overflow:hidden;border-radius:14px;
+  background:rgba(255,248,230,.45);border:1px solid rgba(0,0,0,.18);box-shadow:0 4px 14px rgba(0,0,0,.25)}
+.chat-head{padding:.7rem 1rem;border-bottom:1px solid rgba(0,0,0,.12);display:flex;align-items:center;gap:.5rem;
+  background:rgba(58,36,19,.85)}
+.chat-head h2{font-family:'Orbitron',sans-serif;font-size:.8rem;letter-spacing:.12em;color:#ffe9c4;text-transform:uppercase}
+.chat-head .hint{font-size:.64rem;color:rgba(255,233,196,.6);margin-left:auto;font-family:'JetBrains Mono',monospace}
+.chat-body{flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:.7rem}
+.msg{max-width:88%;padding:.55rem .8rem;border-radius:12px;font-size:.85rem;line-height:1.45;white-space:pre-wrap;word-wrap:break-word}
+.msg.user{align-self:flex-end;background:linear-gradient(135deg,#c98a2d,#7a4a12);color:#fff;border-bottom-right-radius:3px}
+.msg.bot{align-self:flex-start;background:rgba(255,255,255,.7);border:1px solid rgba(0,0,0,.1);border-bottom-left-radius:3px;color:#352b1a}
+.msg .who{display:block;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(53,43,26,.55);margin-bottom:.2rem;font-family:'JetBrains Mono',monospace}
+.msg.typing{color:rgba(53,43,26,.5);font-style:italic}
+.chat-in{display:flex;gap:.5rem;padding:.7rem;border-top:1px solid rgba(0,0,0,.12);background:rgba(255,248,230,.5)}
+.chat-in input{flex:1;background:rgba(255,255,255,.7);border:1px solid rgba(0,0,0,.2);border-radius:8px;color:var(--t1);font-family:'Inter',sans-serif;font-size:.85rem;padding:.55rem .7rem;outline:none}
+.chat-in input:focus{border-color:var(--n-purple)}
+.chat-in button{background:linear-gradient(135deg,#c98a2d,#7a4a12);border:none;color:#fff;font-family:'Orbitron',sans-serif;font-size:.7rem;letter-spacing:.1em;padding:.55rem .9rem;border-radius:8px;cursor:pointer;text-transform:uppercase;box-shadow:none}
+.chat-in button:disabled{opacity:.5;cursor:default}
+.chat .ermsg{color:var(--err);font-size:.72rem;font-family:'JetBrains Mono',monospace;padding:0 1rem .2rem}
 </style>
 </head>
 <body>
-<canvas id="starfield"></canvas>
-<div class="lf-wrap" id="wrap">
-  <div class="lf-toolbar">
+<div class="boardframe">
+  <div class="toolbar">
     <div>
-      <h1><span id="lfLeaf">LEAF</span> · <span id="lfWho">grove</span></h1>
+      <h1><span id="lfLeaf">LEAF</span></h1>
       <div class="sub" id="lfSub">your corkboard &amp; assistant</div>
     </div>
-    <div class="lf-actions">
+    <div class="actions">
       <span class="saved" id="saved">✓ saved</span>
+      <select class="filter" id="filter" title="Filter by tag">
+        <option value="">All</option>
+        <option value="__untagged">Untagged</option>
+      </select>
+      <button id="addTagBtn" onclick="addTag()">+ Tag</button>
       <a class="back" href="index.html">← Tree</a>
     </div>
   </div>
 
   <div class="lf-main">
     <div>
+      <div class="scratch">
+        <div class="scratchhead">📝 Scratch &amp; Dump</div>
+        <div class="scratchrow">
+          <textarea id="scratch" placeholder="Brain-dump here…"></textarea>
+        </div>
+      </div>
       <div class="board" id="board"></div>
     </div>
+
+    <!-- assistant chat -->
     <div class="chat">
       <div class="chat-head">
         <h2>🌿 <span id="chatName">Assistant</span></h2>
@@ -44,6 +139,10 @@
     </div>
   </div>
 </div>
+
+<!-- hidden due picker (rendered so showPicker() works) -->
+<input type="datetime-local" id="duePicker" aria-hidden="true"
+       style="position:fixed;left:-9999px;top:0;opacity:0;width:1px;height:1px;pointer-events:none">
 
 <script src="leaf.js"></script>
 </body>

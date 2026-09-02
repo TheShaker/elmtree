@@ -87,8 +87,6 @@ const THEMES = {
   },
 };
 
-const COLORS = ['', 'pink', 'blue', 'green', 'orange'];
-
 // ---------- Identity + theme ----------
 let leafId = sessionStorage.getItem('elm_leaf') || '';
 if (!leafId) {
@@ -101,10 +99,9 @@ const theme = THEMES[leafId] || THEMES.shaker;
 function applyTheme() {
   document.title = (theme.title || leafId || 'LEAF') + ' · ELMTREE';
   document.getElementById('lfLeaf').textContent = (theme.emoji || '') + ' ' + (theme.title || leafId || 'LEAF');
-  document.getElementById('lfWho').textContent = theme.sub || 'your grove';
   document.getElementById('lfSub').textContent = theme.sub || 'your corkboard & assistant';
   document.getElementById('chatName').textContent = theme.assistant || 'Assistant';
-  if (theme.accent) document.documentElement.style.setProperty('--accent', theme.accent);
+  if (theme.accent) { /* corkboard chrome ignores accent */ }
 }
 applyTheme();
 
@@ -124,11 +121,15 @@ let board = null, saveTimer = null, dirty = false;
 
 function uid(p) { return p + Math.random().toString(36).slice(2, 9); }
 
+const COLORS = ['', 'pink', 'blue', 'green', 'orange'];
+const DEFAULT_TAGS = ['#today'];
+let state = { filter: '' };
+
 // Theme defaults (with starter cards) are cloneable, not shared.
 function themedColumns() {
   return theme.columns.map(c => ({ id: uid('c'), title: c.title, cards: (c.cards || []).map(t => ({ id: uid('k'), text: t })) }));
 }
-function defaultBoard() { return { columns: themedColumns() }; }
+function defaultBoard() { return { columns: themedColumns(), scratch: '', tags: DEFAULT_TAGS.slice() }; }
 
 async function loadBoard() {
   if (!leafId) { render(); return; }
@@ -140,18 +141,36 @@ async function loadBoard() {
       // Empty board (no saved columns yet) falls back to theme defaults so the
       // page never renders a blank board.
       board = (d && Array.isArray(d.columns) && d.columns.length) ? migrate(d) : defaultBoard();
-    } else { board = defaultBoard(); }
-  } catch (e) { board = defaultBoard(); }
+      restoreAux();
+    } else { board = defaultBoard(); restoreAux(); }
+  } catch (e) { board = defaultBoard(); restoreAux(); }
   render();
 }
 
 function migrate(d) {
   if (!d || !Array.isArray(d.columns)) return defaultBoard();
-  d.columns.forEach(c => { if (!Array.isArray(c.cards)) c.cards = []; });
+  d.columns.forEach(c => {
+    if (!Array.isArray(c.cards)) c.cards = [];
+    c.cards.forEach(cd => {
+      if (cd.tag === undefined) cd.tag = '';
+      if (cd.notes === undefined) cd.notes = '';
+      if (cd.due === undefined) cd.due = null;
+      if (cd.color === undefined) cd.color = '';
+    });
+  });
   return d;
 }
 
+// load scratch + tag filter into their controls after a board load
+function restoreAux() {
+  const sc = document.getElementById('scratch');
+  if (sc) sc.value = board.scratch || '';
+  renderTagsUI();
+}
+
 function scheduleSave() {
+  const sc = document.getElementById('scratch');
+  if (sc) board.scratch = sc.value;
   dirty = true; clearTimeout(saveTimer); saveTimer = setTimeout(save, 700);
 }
 async function save() {
@@ -165,6 +184,49 @@ async function save() {
     if (r.ok && dirty) { dirty = false; el.classList.add('on'); setTimeout(() => el.classList.remove('on'), 1400); }
     else if (r.status === 403) { alert('Session expired. Re-enter your leaf.'); location.href = 'index.html'; }
   } catch (e) { }
+}
+
+// ---------- tags / filter ----------
+function addTag() {
+  const t = prompt('New tag (e.g. #project):', '#');
+  if (!t) return;
+  let tag = t.trim(); if (!tag) return;
+  if (tag[0] !== '#') tag = '#' + tag;
+  if (!board.tags.includes(tag)) board.tags.push(tag);
+  scheduleSave(); renderTagsUI(); render();
+}
+function renderTagsUI() {
+  const sel = document.getElementById('filter');
+  if (!sel) return;
+  const cur = state.filter;
+  sel.innerHTML = '';
+  ['', '__untagged'].concat((board.tags || [])).forEach(t => {
+    const o = document.createElement('option'); o.value = t;
+    o.textContent = t === '' ? 'All' : t === '__untagged' ? 'Untagged' : t;
+    sel.appendChild(o);
+  });
+  if (cur) sel.value = cur;
+}
+function setFilter(v) { state.filter = v; render(); }
+function passesFilter(cd) {
+  if (!state.filter) return true;
+  if (state.filter === '__untagged') return !cd.tag;
+  return cd.tag === state.filter;
+}
+
+// ---------- due helper ----------
+function fmtDue(iso) {
+  if (!iso) return '';
+  const d = new Date(iso), now = new Date();
+  const days = Math.floor((d - now) / 86400000);
+  const txt = d.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  return { txt, over: d < now, soon: days <= 3 && d >= now };
+}
+function setDue(cd) {
+  const picker = document.getElementById('duePicker');
+  picker.value = cd.due || '';
+  picker.showPicker?.();
+  picker.onchange = () => { cd.due = picker.value || null; scheduleSave(); render(); };
 }
 
 function render() {
@@ -181,12 +243,14 @@ function render() {
     sec.appendChild(inp); sec.appendChild(cnt);
     const cards = document.createElement('div');
     cards.className = 'cards';
-    col.cards.forEach((cd) => { cards.appendChild(cardEl(cd, col)); });
+    const shown = col.cards.filter(passesFilter);
+    shown.forEach((cd) => { cards.appendChild(cardEl(cd, col)); });
     const empty = document.createElement('div');
-    empty.className = 'colempty'; empty.textContent = col.cards.length ? '' : 'empty'; empty.style.display = col.cards.length ? 'none' : 'block';
+    empty.className = 'colempty'; empty.textContent = state.filter ? 'no matches' : 'empty';
+    empty.style.display = shown.length ? 'none' : 'block';
     const add = document.createElement('button');
     add.className = 'addcard'; add.textContent = '+ add card';
-    add.onclick = () => { col.cards.push({ id: uid('k'), text: '' }); scheduleSave(); render(); };
+    add.onclick = () => { col.cards.push({ id: uid('k'), text: '', tag: '', notes: '', due: null, color: '' }); scheduleSave(); render(); };
     sec.append(inp, cnt, cards, empty, add);
     bd.appendChild(sec);
   });
@@ -195,52 +259,74 @@ function render() {
 function cardEl(cd, col) {
   const div = document.createElement('div');
   div.className = 'card' + (cd.color && COLORS.includes(cd.color) ? ' c-' + cd.color : '');
-  const grip = document.createElement('div');
-  grip.textContent = '⠿'; grip.style.cursor = 'grab'; grip.style.opacity = .5;
-  grip.addEventListener('pointerdown', e => startDrag(e, cd, col, div));
-  const ta = document.createElement('textarea');
-  ta.className = 'ctext'; ta.rows = 1; ta.placeholder = 'Task…'; ta.value = cd.text;
+  const ta = document.createElement('textarea'); ta.className = 'ctext'; ta.rows = 1; ta.placeholder = 'Task…'; ta.value = cd.text;
   ta.oninput = () => { cd.text = ta.value; scheduleSave(); };
   ta.addEventListener('input', () => { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; });
   requestAnimationFrame(() => { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; });
+
   const meta = document.createElement('div'); meta.className = 'cmeta';
-  const del = document.createElement('button'); del.className = 'mini'; del.textContent = '✕';
-  del.title = 'Delete'; del.onclick = () => { col.cards = col.cards.filter(c => c !== cd); scheduleSave(); render(); };
+  const left = document.createElement('div'); left.className = 'cmeta-left';
+  const right = document.createElement('div'); right.className = 'cmeta-left';
+
+  // priority: slot number + move up/down
+  const idx = col.cards.indexOf(cd);
+  const up = document.createElement('button'); up.className = 'prio'; up.textContent = '▲';
+  up.title = 'Raise priority'; up.disabled = (idx === 0);
+  up.onclick = () => moveCard(col, cd, -1);
+  const num = document.createElement('span'); num.className = 'colcount'; num.textContent = idx + 1;
+  const dn = document.createElement('button'); dn.className = 'prio'; dn.textContent = '▼';
+  dn.title = 'Lower priority'; dn.disabled = (idx === col.cards.length - 1);
+  dn.onclick = () => moveCard(col, cd, 1);
+  const prioW = document.createElement('span'); prioW.style.display = 'flex'; prioW.style.alignItems = 'center'; prioW.style.gap = '.12rem';
+  prioW.append(up, num, dn);
+  left.appendChild(prioW);
+
+  // tag chip + tag selector
+  if (cd.tag) { const chip = document.createElement('span'); chip.className = 'tagchip'; chip.textContent = cd.tag; left.appendChild(chip); }
+  const tag = document.createElement('select'); tag.className = 'ctagsel'; tag.title = 'Tag';
+  const o0 = document.createElement('option'); o0.value = ''; o0.textContent = '—'; tag.appendChild(o0);
+  (board.tags || []).forEach(t => { const o = document.createElement('option'); o.value = t; o.textContent = t; tag.appendChild(o); });
+  tag.value = cd.tag || ''; tag.onchange = () => { cd.tag = tag.value || ''; scheduleSave(); render(); };
+  left.appendChild(tag);
+
+  // due button
+  const due = document.createElement('button'); due.className = 'cdue';
+  if (cd.due) { const f = fmtDue(cd.due); due.textContent = '⏱ ' + f.txt;
+    due.classList.add(f.over ? 'over' : f.soon ? 'soon' : 'due');
+  } else due.textContent = '⏱ +';
+  due.title = cd.due ? ('Due ' + cd.due + ' — click to change') : 'Set due';
+  due.onclick = () => setDue(cd);
+  left.appendChild(due);
+
+  // color dots
   const dots = document.createElement('span'); dots.style.display = 'flex'; dots.style.gap = '.15rem';
   COLORS.forEach(c => {
-    const d = document.createElement('button'); d.className = 'mini';
-    d.style.width = '14px'; d.style.height = '14px'; d.style.borderRadius = '50%';
-    d.style.background = { x: '#3c4a1f', pink: '#66304b', blue: '#274c6b', green: '#2c4f2f', orange: '#6b4a26' }[c];
-    d.style.outline = (cd.color === c) ? '2px solid #ffd54f' : '';
+    const d = document.createElement('button'); d.className = 'mini'; d.style.width = '14px'; d.style.height = '14px'; d.style.borderRadius = '50%';
+    d.style.background = { x: '#fff3a3', pink: '#ffc9d8', blue: '#cfe5ff', green: '#d4f2c8', orange: '#ffe0b3' }[c];
+    d.style.outline = (cd.color === c) ? '2px solid #333' : '';
     d.onclick = () => { cd.color = c; scheduleSave(); render(); };
     dots.appendChild(d);
   });
-  meta.append(dots, del);
-  div.append(grip, ta, meta);
-  return div;
-}
+  right.appendChild(dots);
 
-// drag to reorder
-let dragGhost = null;
-function startDrag(e, cd, col, div) {
-  e.preventDefault();
-  const ghost = div.cloneNode(true);
-  ghost.style.position = 'fixed'; ghost.style.pointerEvents = 'none'; ghost.style.zIndex = 999;
-  ghost.style.width = div.offsetWidth + 'px'; ghost.style.opacity = .5; ghost.style.left = '-9999px';
-  document.body.appendChild(ghost); dragGhost = ghost;
-  function move(ev) {
-    if (!dragGhost) return;
-    dragGhost.style.left = (ev.clientX + 8) + 'px';
-    dragGhost.style.top = (ev.clientY + 8) + 'px';
-    dragGhost.classList.add('dragging');
-  }
-  function up() {
-    document.removeEventListener('pointermove', move);
-    document.removeEventListener('pointerup', up);
-    if (dragGhost) { dragGhost.remove(); dragGhost = null; }
-  }
-  document.addEventListener('pointermove', move);
-  document.addEventListener('pointerup', up);
+  // delete
+  const del = document.createElement('button'); del.className = 'mini'; del.textContent = '✕';
+  del.title = 'Delete card'; del.onclick = () => { col.cards = col.cards.filter(x => x !== cd); scheduleSave(); render(); };
+  right.appendChild(del);
+
+  meta.append(left, right);
+
+  // notes
+  const nt = document.createElement('textarea'); nt.className = 'cnotes'; nt.rows = 2; nt.placeholder = 'details…'; nt.value = cd.notes || '';
+  nt.oninput = () => { cd.notes = nt.value; scheduleSave(); };
+
+  div.append(ta, meta, nt); return div;
+}
+function moveCard(col, cd, delta) {
+  const k = col.cards.indexOf(cd), j = k + delta;
+  if (j < 0 || j >= col.cards.length) return;
+  col.cards.splice(k, 1); col.cards.splice(j, 0, cd);
+  scheduleSave(); render();
 }
 
 // ---------- Chat (DeepSeek via Function) ----------
@@ -299,11 +385,15 @@ chatSend.addEventListener('click', send);
 chatIn.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
 
 // ---------- Boot ----------
+document.getElementById('scratch').addEventListener('input', scheduleSave);
+const filterSel = document.getElementById('filter');
+if (filterSel) filterSel.addEventListener('change', e => setFilter(e.target.value));
+
 window.addEventListener('load', () => {
   if (!leafId) { document.getElementById('board').textContent = 'No leaf selected.'; return; }
   if (!token) {
     addMsg('bot', 'This leaf is locked. Go back to the tree and enter its password to load your board & assistant.');
-    document.getElementById('board').innerHTML = '<p style="color:var(--dim);font-size:.8rem;">Locked — no session.</p>';
+    document.getElementById('board').innerHTML = '<p style="color:var(--t2);font-size:.8rem;">Locked — no session.</p>';
     return;
   }
   loadBoard();

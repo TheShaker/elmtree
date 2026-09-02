@@ -414,10 +414,9 @@ async function unlock(){
     if(d.ok && d.token){
       sessionStorage.setItem('elm_token_'+activeLeaf.id, d.token);
       sessionStorage.setItem('elm_leaf', activeLeaf.id);
-      // Static board pages for the leaves that have them; others fall back to
-      // the locked leaf.html (which shows a lock prompt until a token proves in).
-      const BOARD_PAGES = { shaker:'/shaker.html', athletics:'/athletics.html' };
-      const dest = BOARD_PAGES[activeLeaf.id] || ('/leaf?leaf='+encodeURIComponent(activeLeaf.id));
+      // All leaves funnel to the same themed corkboard template (leaf.html),
+      // which themes itself by leaf id and gates against the token.
+      const dest = '/leaf?leaf=' + encodeURIComponent(activeLeaf.id);
       window.location.href = dest;
     } else {
       err.textContent = d.error || '✗ access denied';
