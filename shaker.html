@@ -58,6 +58,28 @@ a.back:hover{color:#fff}
 .addcard{background:rgba(255,255,255,.5);border:1px dashed rgba(0,0,0,.3);border-radius:6px;color:rgba(43,33,25,.6);padding:.4rem;font-size:.68rem;cursor:pointer;text-align:left;font-family:'JetBrains Mono',monospace;box-shadow:none}
 .addcard:hover{color:var(--n-blue);background:rgba(255,255,255,.7)}
 @media (max-width:700px){.board{flex-direction:column;align-items:stretch}.col{max-width:none}}
+
+/* ---------- LLM oracle chat ---------- */
+.lf-main{display:grid;grid-template-columns:1fr 360px;gap:1.1rem;align-items:start;margin-top:1.2rem}
+@media (max-width:900px){.lf-main{grid-template-columns:1fr}}
+.chat{display:flex;flex-direction:column;height:560px;overflow:hidden;border-radius:14px;
+  background:rgba(255,248,230,.45);border:1px solid rgba(0,0,0,.18);box-shadow:0 4px 14px rgba(0,0,0,.25)}
+.chat-head{padding:.7rem 1rem;border-bottom:1px solid rgba(0,0,0,.12);display:flex;align-items:center;gap:.5rem;
+  background:rgba(58,36,19,.85)}
+.chat-head h2{font-family:'Orbitron',sans-serif;font-size:.8rem;letter-spacing:.12em;color:#ffe9c4;text-transform:uppercase}
+.chat-head .hint{font-size:.64rem;color:rgba(255,233,196,.6);margin-left:auto;font-family:'JetBrains Mono',monospace}
+.chat-body{flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:.7rem}
+.msg{max-width:88%;padding:.55rem .8rem;border-radius:12px;font-size:.85rem;line-height:1.45;white-space:pre-wrap;word-wrap:break-word}
+.msg.user{align-self:flex-end;background:linear-gradient(135deg,#c98a2d,#7a4a12);color:#fff;border-bottom-right-radius:3px}
+.msg.bot{align-self:flex-start;background:rgba(255,255,255,.7);border:1px solid rgba(0,0,0,.1);border-bottom-left-radius:3px;color:#352b1a}
+.msg .who{display:block;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(53,43,26,.55);margin-bottom:.2rem;font-family:'JetBrains Mono',monospace}
+.msg.typing{color:rgba(53,43,26,.5);font-style:italic}
+.chat-in{display:flex;gap:.5rem;padding:.7rem;border-top:1px solid rgba(0,0,0,.12);background:rgba(255,248,230,.5)}
+.chat-in input{flex:1;background:rgba(255,255,255,.7);border:1px solid rgba(0,0,0,.2);border-radius:8px;color:var(--t1);font-family:'Inter',sans-serif;font-size:.85rem;padding:.55rem .7rem;outline:none}
+.chat-in input:focus{border-color:var(--n-purple)}
+.chat-in button{background:linear-gradient(135deg,#c98a2d,#7a4a12);border:none;color:#fff;font-family:'Orbitron',sans-serif;font-size:.7rem;letter-spacing:.1em;padding:.55rem .9rem;border-radius:8px;cursor:pointer;text-transform:uppercase;box-shadow:none}
+.chat-in button:disabled{opacity:.5;cursor:default}
+.chat .ermsg{color:var(--err);font-size:.72rem;font-family:'JetBrains Mono',monospace;padding:0 1rem .2rem}
 </style>
 </head>
 <body>
@@ -73,14 +95,31 @@ a.back:hover{color:#fff}
     </div>
   </div>
 
-  <div class="scratch">
-    <div class="scratchhead">📝 Scratch &amp; Dump</div>
-    <div class="scratchrow">
-      <textarea id="scratch" placeholder="Brain-dump here…"></textarea>
+  <div class="lf-main">
+    <div>
+      <div class="scratch">
+        <div class="scratchhead">📝 Scratch &amp; Dump</div>
+        <div class="scratchrow">
+          <textarea id="scratch" placeholder="Brain-dump here…"></textarea>
+        </div>
+      </div>
+      <div class="board" id="board"></div>
+    </div>
+
+    <!-- LLM oracle -->
+    <div class="chat">
+      <div class="chat-head">
+        <h2>🔮 Groove Oracle</h2>
+        <span class="hint" id="chatState">idle</span>
+      </div>
+      <div class="chat-body" id="chatBody"></div>
+      <div class="chat-in">
+        <input id="chatIn" type="text" placeholder="Ask your oracle…" autocomplete="off">
+        <button id="chatSend" disabled>Ask</button>
+      </div>
+      <div class="ermsg" id="chatErr"></div>
     </div>
   </div>
-
-  <div class="board" id="board"></div>
 </div>
 
 <script>
@@ -166,6 +205,64 @@ function cardEl(cd,col){
 
 document.getElementById('scratch').addEventListener('input',scheduleSave);
 loadBoard();
+
+// ---------- LLM oracle: chat with the leaf's assistant via /api/chat ----------
+const LEAF_ID='shaker';
+const token = sessionStorage.getItem('elm_token_'+LEAF_ID)||'';
+const chatBody=document.getElementById('chatBody');
+const chatIn=document.getElementById('chatIn');
+const chatSend=document.getElementById('chatSend');
+const chatState=document.getElementById('chatState');
+const chatErr=document.getElementById('chatErr');
+const history=[];
+const LIVE=!!token;
+
+function addMsg(who,text){
+  const m=document.createElement('div');
+  m.className='msg '+who;
+  const w=document.createElement('span'); w.className='who';
+  w.textContent = who==='user'?'you':'oracle';
+  const t=document.createElement('div'); t.textContent=text; t.style.whiteSpace='pre-wrap';
+  m.appendChild(w); m.appendChild(t);
+  chatBody.appendChild(m); chatBody.scrollTop=chatBody.scrollHeight;
+  return m;
+}
+function esc(){} /* textContent used above; no injection */
+function setBusy(b){ chatSend.disabled=b; chatIn.disabled=b; chatState.textContent=b?'thinking…':'idle'; }
+
+if(!LIVE){
+  chatState.textContent='locked';
+  chatErr.textContent='Enter the leaf from the tree to enable the oracle.';
+  chatIn.disabled=true; chatSend.disabled=true;
+} else {
+  addMsg('bot','Hey — I’m your grove oracle. Ask away.');
+  chatSend.disabled=false;
+}
+
+async function send(){
+  const text=chatIn.value.trim();
+  if(!text) return;
+  chatIn.value=''; chatErr.textContent='';
+  addMsg('user', text);
+  history.push({role:'user',content:text});
+  const typing=addMsg('bot','…'); typing.classList.add('typing');
+  setBusy(true);
+  try{
+    const r=await fetch('/api/chat',{
+      method:'POST', headers:{'Content-Type':'application/json','X-Elm-Token':token},
+      body:JSON.stringify({leaf:LEAF_ID, history})
+    });
+    const d=await r.json().catch(()=>({}));
+    typing.remove();
+    if(d.reply){ history.push({role:'assistant',content:d.reply}); addMsg('bot', d.reply); }
+    else chatErr.textContent=d.error||'No reply.';
+  }catch(e){
+    typing.remove(); chatErr.textContent='Could not reach the oracle.';
+  }
+  setBusy(false);
+}
+chatSend.addEventListener('click', send);
+chatIn.addEventListener('keydown', e=>{ if(e.key==='Enter') send(); });
 </script>
 </body>
 </html>

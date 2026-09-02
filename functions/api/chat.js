@@ -14,7 +14,7 @@ const PROVIDERS = {
   },
   openrouter: {
     url: 'https://openrouter.ai/api/v1/chat/completions',
-    model: 'deepseek/deepseek-chat',
+    model: 'deepseek/deepseek-v4-flash-0731',
     key: (env) => env.OPENROUTER_API_KEY,
   },
   openai: {
