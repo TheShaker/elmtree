@@ -1,9 +1,12 @@
 /* ELMTREE — generative elm with clickable leaves */
 "use strict";
 
-// ---------- Seeded RNG (deterministic tree across reloads) ----------
+// ---------- Seeded RNG ----------
+// Seed is random each load so the tree shuffles a bit on every refresh, but the
+// branch-spread parameters below are kept wide so the canopy ALWAYS opens into
+// a large sprawling spread regardless of seed.
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
-const rnd = mulberry32(1337);
+const rnd = mulberry32(Math.floor(Math.random()*0xffffffff)+1);
 
 // ---------- Starfield backdrop ----------
 (function(){
@@ -233,26 +236,26 @@ function placeLeaves(leaves){
     // stays on the outer g, so the arc is never disturbed).
     const bob = el('g',{class:'leafbob'}, g);
 
-    // --- invisible hit target: a generous circle covering leaf + label ---
-    const hit = el('circle',{cx:0,cy:44,r:56,class:'leafhit',fill:'rgba(0,0,0,0)'}, bob);
+    // --- invisible hit target: generous circle covering the giant leaf + label ---
+    const hit = el('circle',{cx:0,cy:70,r:70,class:'leafhit',fill:'rgba(0,0,0,0)'}, bob);
 
     // --- stem (drawn from branch node toward the leaf) ---
-    el('path',{d:'M 0 0 C 1 9 2 16 0 24', class:'leafstem'}, bob);
+    el('path',{d:'M 0 0 C 2 14 4 26 0 40', class:'leafstem'}, bob);
 
-    // --- leaf + midrib ---
-    const rot = (rnd()*24-12 + i*6)*(i%2?-1:1);
-    const lf = el('g',{class:'leafbody', transform:`translate(0 24) rotate(${rot})`}, bob);
+    // --- leaf + midrib: GIANT so it fills the hit circle ---
+    const rot = (rnd()*20-10 + i*5)*(i%2?-1:1);
+    const lf = el('g',{class:'leafbody', transform:`translate(0 40) rotate(${rot})`}, bob);
     el('path',{
-      d:'M 0 0 C -13 -11 -24 -18 -28 0 C -24 17 -13 10 0 0 Z',
-      class:'leafshape', fill:'#86e25a', stroke:'#1d5c20','stroke-width':'1.6'
+      d:'M 0 0 C -26 -22 -48 -36 -56 0 C -48 34 -26 20 0 0 Z',
+      class:'leafshape', fill:'#86e25a', stroke:'#1d5c20','stroke-width':'3'
     }, lf);
-    el('path',{d:'M -27 0 L 1 0', class:'midrib','stroke':'#1d5c20','stroke-width':'1','opacity':'0.5'}, lf);
+    el('path',{d:'M -55 0 L 0 0', class:'midrib','stroke':'#17651b','stroke-width':'2.4','opacity':'0.5'}, lf);
 
     // subtle white ring, shown on hover
-    el('ellipse',{cx:0,cy:24,rx:30,ry:34,class:'leafring',fill:'none'}, bob);
+    el('ellipse',{cx:0,cy:40,rx:56,ry:60,class:'leafring',fill:'none'}, bob);
 
     // label
-    const label = el('text',{class:'leaflabel','text-anchor':'middle',dy:74,fill:'#ffffff'}, bob);
+    const label = el('text',{class:'leaflabel','text-anchor':'middle',y:116,fill:'#ffffff'}, bob);
     label.textContent = leaf.name || leaf.id;
 
     g.setAttribute('transform',`translate(${px} ${py})`);
