@@ -66,16 +66,16 @@ function genTree(){
   el('stop',{offset:'0%','stop-color':'#8fd6a0'}, grad);
   el('stop',{offset:'55%','stop-color':'#3d9c4f'}, grad);
   el('stop',{offset:'100%','stop-color':'#14521f'}, grad);
-  const planetCircle = el('circle',{cx:500,cy:880,r:300,fill:'url(#planetGrad)'}, planet);
+  const planetCircle = el('circle',{cx:500,cy:930,r:200,fill:'url(#planetGrad)'}, planet);
   // planet surface speckle (crater-dots like the Mercury map vibe)
-  for(let i=0;i<40;i++){
-    const a=rnd()*Math.PI*2, rr=Math.sqrt(rnd())*300;
-    const px=500+Math.cos(a)*rr*0.9, py=880+Math.sin(a)*rr*0.9;
-    if(py>740) el('circle',{cx:px,cy:py,r:rnd()*3+1,fill:'rgba(0,40,15,'+(0.06+rnd()*0.1)+')'}, planet);
+  for(let i=0;i<28;i++){
+    const a=rnd()*Math.PI*2, rr=Math.sqrt(rnd())*200;
+    const px=500+Math.cos(a)*rr*0.9, py=930+Math.sin(a)*rr*0.9;
+    if(py>760) el('circle',{cx:px,cy:py,r:rnd()*3+1,fill:'rgba(0,40,15,'+(0.06+rnd()*0.1)+')'}, planet);
   }
 
   // trunk base (sits on the planet horizon)
-  const origin = {x:500, y:660};
+  const origin = {x:500, y:738};
 
   // ---------- Canopy underlay: soft silhouette + a moderate scatter of leaves ----------
   // OPTIMIZATION: instead of ~95 tiny leaf-blobs (each in its own wrapper <g>),
@@ -84,27 +84,27 @@ function genTree(){
   // Wrapper <g>s are only created for the ~1-in-5 drifting leaves, since the
   // CSS fall animation needs a dedicated transform slot.
   const foliage = el('g',{id:'elmFoliage'}, svg);
-  const cx=500, cy=270;                       // crown center
+  const cx=500, cy=255;                       // crown center (raised/wider)
   const blur = el('filter',{id:'softCanopy',x:'-30%',y:'-30%',width:'160%',height:'160%'}, defs);
-  el('feGaussianBlur',{stdDeviation:22}, blur);
+  el('feGaussianBlur',{stdDeviation:26}, blur);
   const silG = el('g',{filter:'url(#softCanopy)'}, foliage);
-  // fuller, natural (slightly asymmetric) canopy silhouette
-  [[-110,25,255,125,'#1e4d24'],[130,10,235,115,'#245c2b'],[10,-45,205,95,'#2e7a35']]
-    .forEach(s=> el('ellipse',{cx:cx+s[0],cy:cy+s[1],rx:s[2],ry:s[3],fill:s[4],opacity:0.6}, silG));
+  // fuller, natural (slightly asymmetric) canopy silhouette — larger to match dome
+  [[-150,40,330,165,'#1e4d24'],[180,25,310,155,'#245c2b'],[20,-55,260,130,'#2e7a35']]
+    .forEach(s=> el('ellipse',{cx:cx+s[0],cy:cy+s[1],rx:s[2],ry:s[3],fill:s[4],opacity:0.7}, silG));
   const canopyHerbs=['#3f9e43','#57b755','#2f7d34','#6ecf5a','#4caf50'];
-  for(let i=0;i<52;i++){
+  for(let i=0;i<66;i++){
     // elliptical crown: denser toward the middle, thinning at the edge
     let px,py,rr=Math.pow(rnd(),0.7);
     const ang=rnd()*Math.PI*2;
     // mostly fill the ellipse, some scatter outward near branch tips
-    px=cx+Math.cos(ang)*(90+rnd()*175)*rr;
-    py=cy+Math.sin(ang)*(60+rnd()*125)*rr;
-    py=Math.min(610, Math.max(60,py));
-    if(px<110||px>890) continue;
-    const sz=rnd()*8+6;                       // slightly larger blobs, fewer of them
+    px=cx+Math.cos(ang)*(100+rnd()*200)*rr;
+    py=cy+Math.sin(ang)*(70+rnd()*145)*rr;
+    py=Math.min(650, Math.max(45,py));
+    if(px<90||px>910) continue;
+    const sz=rnd()*9+7;                       // slightly larger blobs, more of them
     const d=`M0 0 C ${-sz*0.6} ${-sz*0.5} ${-sz} ${-sz*0.3} ${-sz*0.5} 0 C 0 ${sz*0.45} ${sz*0.5} ${sz*0.2} 0 0 Z`;
     const fill=canopyHerbs[Math.floor(rnd()*canopyHerbs.length)];
-    const op=(0.55+rnd()*0.3).toFixed(2);
+    const op=(0.5+rnd()*0.3).toFixed(2);
     const rot=(rnd()*90-45).toFixed(0);
     if(rnd()<0.20){
       // drifting leaf: needs a wrapper <g> so the CSS transform animation
@@ -174,7 +174,7 @@ function genTree(){
   }
 
   // ---------- Trunk: rises to the same crown anchor, now with a gentle bow ----------
-  const crown={x:500, y:430};                 // trunk top (kept exact)
+  const crown={x:500, y:385};                 // trunk top (raised → larger tree)
   limb(origin.x, origin.y, crown.x, crown.y, 30);
   // bark knots: a couple of seeded elliptical whorls low on the trunk
   for(let k=0;k<2;k++){
@@ -301,7 +301,7 @@ const SLOT_POOL = [
   { deg: 52, h:0.78 },
   { deg: 75, h:0.9  },
 ];
-const DOME={ cx:500, cy:330, rx:340, ry:215 };
+const DOME={ cx:500, cy:315, rx:400, ry:255 };
 function slotXY(s){
   const r=s.deg*Math.PI/180;
   return { x:DOME.cx + Math.sin(r)*DOME.rx, y:DOME.cy - Math.cos(r)*DOME.ry*s.h };
